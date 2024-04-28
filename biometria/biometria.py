@@ -1,50 +1,61 @@
 import cv2
-from mtcnn import MTCNN
 import os
+import dlib
+import json
 
-# Función para detectar y guardar el rostro capturado
-def detectar_guardar(frame, face_detector, output_dir):
-    # Detectar rostros en el frame
-    faces = face_detector.detect_faces(frame)
-    
-    # Si se detecta al menos un rostro
-    if faces:
-        # Tomar el primer rostro detectado
-        face = faces[0]['box']
-        x, y, width, height = face
-        face_img = frame[y:y+height, x:x+width]
-        
-        # Crear la carpeta si no existe
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        
-        # Guardar la imagen del rostro en la carpeta especificada
-        cv2.imwrite(os.path.join(output_dir, 'captured_face.jpg'), face_img)
-        print("Rostro capturado y guardado en:", output_dir)
+# Función para capturar el rostro y sus puntos faciales
+def capturar_rostro():
+    # Activar la cámara
+    cap = cv2.VideoCapture(0)
 
-# Inicializar el detector de rostros
-face_detector = MTCNN()
+    # Cargar el detector de rostros de dlib
+    detector_rostros = dlib.get_frontal_face_detector()
+    predictor_puntos_faciales = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
-# Inicializar la captura de video
-cap = cv2.VideoCapture(0)
+    # Crear la carpeta "ROSTROS" si no existe
+    if not os.path.exists('ROSTROS'):
+        os.makedirs('ROSTROS')
 
-# Crear una ventana para mostrar la captura de video
-cv2.namedWindow("Face Capture", cv2.WINDOW_NORMAL)
+    # Capturar el rostro y sus puntos faciales
+    while True:
+        ret, frame = cap.read()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-while True:
-    # Leer un frame del video
-    ret, frame = cap.read()
-    
-    # Mostrar el frame en la ventana
-    cv2.imshow("Face Capture", frame)
-    
-    # Detectar y guardar el rostro capturado
-    detectar_guardar(frame, face_detector, 'rostros')
-    
-    # Salir del bucle si se presiona la tecla 'q'
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        # Detectar rostros en la imagen
+        rostros = detector_rostros(gray)
 
-# Liberar la captura de video y cerrar las ventanas
-cap.release()
-cv2.destroyAllWindows()
+        # Procesar cada rostro encontrado
+        for i, rostro in enumerate(rostros):
+            # Obtener puntos faciales del rostro
+            puntos_faciales = predictor_puntos_faciales(gray, rostro)
+
+            # Guardar información de los puntos faciales en un diccionario
+            rostro_data = {}
+            for j, punto in enumerate(puntos_faciales.parts()):
+                rostro_data[f'punto_{j+1}'] = (punto.x, punto.y)
+
+            # Guardar la información del rostro en un archivo JSON
+            with open(f'ROSTROS/rostro_{i+1}.json', 'w') as file:
+                json.dump(rostro_data, file, indent=4)
+
+            # Guardar la imagen del rostro
+            rostro_img = frame[rostro.top():rostro.bottom(), rostro.left():rostro.right()]
+            cv2.imwrite(f'ROSTROS/rostro_{i+1}.jpg', rostro_img)
+
+            # Mostrar la imagen del rostro con puntos faciales
+            for punto in puntos_faciales.parts():
+                cv2.circle(rostro_img, (punto.x, punto.y), 2, (0, 255, 0), -1)
+
+        # Mostrar la imagen en la ventana
+        cv2.imshow('Capturando Rostro', frame)
+
+        # Salir del bucle si se presiona la tecla 'q'
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # Cerrar la cámara y la aplicación
+    cap.release()
+    cv2.destroyAllWindows()
+
+# Llamar a la función para capturar el rostro
+capturar_rostro()
