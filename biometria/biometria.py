@@ -49,16 +49,17 @@ def capturar_rostro():
             for punto in puntos_faciales.parts():
                 cv2.circle(rostro_img, (punto.x, punto.y), 2, (0, 255, 0), -1)
 
+            # Cerrar la cámara y la aplicación
+            cap.release()
+            cv2.destroyAllWindows()
+            return
+
         # Mostrar la imagen en la ventana
         cv2.imshow('Capturando Rostro', frame)
 
         # Salir del bucle si se presiona la tecla 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
-    # Cerrar la cámara y la aplicación
-    cap.release()
-    cv2.destroyAllWindows()
 
 # Llamar a la función para capturar el rostro
 capturar_rostro()
