@@ -2,38 +2,35 @@ import cv2
 import os
 import dlib
 import json
-from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.core.window import Window
 
+# Obtener la ruta al directorio actual
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
-class RostrosApp(App):
-    def build(self):
-        Window.clearcolor = (1, 1, 1, 1)
-        layout = BoxLayout(orientation='vertical')
+# Función para capturar el rostro y sus puntos faciales
+def capturar_rostro():
+    # Activar la cámara
+    cap = cv2.VideoCapture(0)
 
-        self.detector_rostros = dlib.get_frontal_face_detector()
-        self.predictor_puntos_faciales = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+    # Cargar el detector de rostros de dlib
+    detector_rostros = dlib.get_frontal_face_detector()
+    predictor_puntos_faciales = dlib.shape_predictor(os.path.join(dir_path, "shape_predictor_68_face_landmarks.dat"))
 
-        self.cap = cv2.VideoCapture(0)
-        self.btn_capture = Button(text="Capturar Rostro")
-        self.btn_capture.bind(on_press=self.capturar_rostro)
+    # Crear la carpeta "ROSTROS" si no existe
+    if not os.path.exists('ROSTROS'):
+        os.makedirs('ROSTROS')
 
-        layout.add_widget(self.btn_capture)
-        return layout
-
-    def capturar_rostro(self, instance):
-        ret, frame = self.cap.read()
+    # Capturar el rostro y sus puntos faciales
+    while True:
+        ret, frame = cap.read()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # Detectar rostros en la imagen
-        rostros = self.detector_rostros(gray)
+        rostros = detector_rostros(gray)
 
         # Procesar cada rostro encontrado
         for i, rostro in enumerate(rostros):
             # Obtener puntos faciales del rostro
-            puntos_faciales = self.predictor_puntos_faciales(gray, rostro)
+            puntos_faciales = predictor_puntos_faciales(gray, rostro)
 
             # Guardar información de los puntos faciales en un diccionario
             rostro_data = {}
@@ -48,11 +45,20 @@ class RostrosApp(App):
             rostro_img = frame[rostro.top():rostro.bottom(), rostro.left():rostro.right()]
             cv2.imwrite(f'ROSTROS/rostro_{i+1}.jpg', rostro_img)
 
-        self.btn_capture.text = "Rostro Capturado"
+            # Mostrar la imagen del rostro con puntos faciales
+            for punto in puntos_faciales.parts():
+                cv2.circle(rostro_img, (punto.x, punto.y), 2, (0, 255, 0), -1)
 
+        # Mostrar la imagen en la ventana
+        cv2.imshow('Capturando Rostro', frame)
 
-if __name__ == '__main__':
-    if not os.path.exists('ROSTROS'):
-        os.makedirs('ROSTROS')
+        # Salir del bucle si se presiona la tecla 'q'
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-    RostrosApp().run()
+    # Cerrar la cámara y la aplicación
+    cap.release()
+    cv2.destroyAllWindows()
+
+# Llamar a la función para capturar el rostro
+capturar_rostro()
