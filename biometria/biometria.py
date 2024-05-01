@@ -2,9 +2,75 @@ import cv2
 import os
 import dlib
 import json
+import random
+import string
+import tkinter as tk
+from tkinter import simpledialog, messagebox
 
 # Obtener la ruta al directorio actual
 dir_path = os.path.dirname(os.path.realpath(__file__))
+base_de_datos_file = os.path.join(dir_path, "base_de_datos.json")
+
+# Función para cargar la base de datos
+def cargar_base_de_datos():
+    if os.path.exists(base_de_datos_file):
+        with open(base_de_datos_file, 'r') as file:
+            return json.load(file)
+    else:
+        return {}
+
+# Función para guardar la base de datos
+def guardar_base_de_datos(base_de_datos):
+    with open(base_de_datos_file, 'w') as file:
+        json.dump(base_de_datos, file, indent=4)
+
+# Función para mostrar el formulario y registrar un usuario
+def registrar_usuario():
+    root = tk.Tk()
+    root.withdraw()
+
+    dialogo = tk.Toplevel(root)
+    dialogo.title("Registro de Usuario")
+
+    tk.Label(dialogo, text="Ingrese sus datos personales").grid(row=0, column=0, columnspan=2, padx=10, pady=5)
+
+    tk.Label(dialogo, text="Nombre:").grid(row=1, column=0, padx=10, pady=5)
+    nombre_entry = tk.Entry(dialogo)
+    nombre_entry.grid(row=1, column=1, padx=10, pady=5)
+
+    tk.Label(dialogo, text="Apellido:").grid(row=2, column=0, padx=10, pady=5)
+    apellido_entry = tk.Entry(dialogo)
+    apellido_entry.grid(row=2, column=1, padx=10, pady=5)
+
+    tk.Label(dialogo, text="Edad:").grid(row=3, column=0, padx=10, pady=5)
+    edad_entry = tk.Entry(dialogo)
+    edad_entry.grid(row=3, column=1, padx=10, pady=5)
+
+    tk.Label(dialogo, text="Ciudad de Nacimiento:").grid(row=4, column=0, padx=10, pady=5)
+    ciudad_entry = tk.Entry(dialogo)
+    ciudad_entry.grid(row=4, column=1, padx=10, pady=5)
+
+    def guardar_datos():
+        nombre = nombre_entry.get()
+        apellido = apellido_entry.get()
+        edad = edad_entry.get()
+        ciudad = ciudad_entry.get()
+
+        if nombre and apellido and edad and ciudad:
+            dialogo.destroy()
+            root.quit()
+            return {
+                "Nombre": nombre,
+                "Apellido": apellido,
+                "Edad": edad,
+                "Ciudad_Nacimiento": ciudad
+            }
+        else:
+            messagebox.showwarning("Campos Incompletos", "Por favor complete todos los campos.")
+
+    tk.Button(dialogo, text="Guardar", command=guardar_datos).grid(row=5, column=0, columnspan=2, padx=10, pady=10)
+
+    root.mainloop()
 
 # Función para capturar el rostro y sus puntos faciales
 def capturar_rostro():
@@ -19,6 +85,9 @@ def capturar_rostro():
     if not os.path.exists('ROSTROS'):
         os.makedirs('ROSTROS')
 
+    # Cargar o crear la base de datos
+    base_de_datos = cargar_base_de_datos()
+
     # Capturar el rostro y sus puntos faciales
     while True:
         ret, frame = cap.read()
@@ -32,22 +101,46 @@ def capturar_rostro():
             # Obtener puntos faciales del rostro
             puntos_faciales = predictor_puntos_faciales(gray, rostro)
 
+            # Generar un ID de usuario aleatorio
+            id_usuario = ''.join(random.choices(string.digits, k=6))
+
+            # Solicitar información al usuario
+            info_usuario = registrar_usuario()
+
+            if info_usuario is None:
+                # Si el usuario cancela, salimos del programa
+                return
+
+            # Guardar la información del formulario en la base de datos
+            info_usuario["ID"] = id_usuario
+            info_usuario["Rostro"] = f'rostro_{id_usuario}.jpg'
+            base_de_datos[id_usuario] = info_usuario
+            guardar_base_de_datos(base_de_datos)
+
             # Guardar información de los puntos faciales en un diccionario
             rostro_data = {}
             for j, punto in enumerate(puntos_faciales.parts()):
                 rostro_data[f'punto_{j+1}'] = (punto.x, punto.y)
 
             # Guardar la información del rostro en un archivo JSON
-            with open(f'ROSTROS/rostro_{i+1}.json', 'w') as file:
+            with open(f'ROSTROS/rostro_{id_usuario}.json', 'w') as file:
                 json.dump(rostro_data, file, indent=4)
 
             # Guardar la imagen del rostro
             rostro_img = frame[rostro.top():rostro.bottom(), rostro.left():rostro.right()]
-            cv2.imwrite(f'ROSTROS/rostro_{i+1}.jpg', rostro_img)
+            cv2.imwrite(f'ROSTROS/rostro_{id_usuario}.jpg', rostro_img)
 
             # Mostrar la imagen del rostro con puntos faciales
             for punto in puntos_faciales.parts():
                 cv2.circle(rostro_img, (punto.x, punto.y), 2, (0, 255, 0), -1)
+
+            # Mostrar la información del registro
+            messagebox.showinfo("Información de Registro", 
+                                f"ID de Usuario: {id_usuario}\n"
+                                f"Nombre: {info_usuario['Nombre']}\n"
+                                f"Apellido: {info_usuario['Apellido']}\n"
+                                f"Edad: {info_usuario['Edad']}\n"
+                                f"Ciudad de Nacimiento: {info_usuario['Ciudad_Nacimiento']}")
 
             # Cerrar la cámara y la aplicación
             cap.release()
