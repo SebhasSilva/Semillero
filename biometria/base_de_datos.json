@@ -254,5 +254,13 @@
         "Edad": 35,
         "Ciudad_Nacimiento": "ibague",
         "Rostro": "rostro_615318.jpg"
+    },
+    "607158": {
+        "Nombre": "prueba",
+        "Apellido": "media cara oscura",
+        "Edad": "27",
+        "Ciudad_Nacimiento": "bogota",
+        "ID": "607158",
+        "Rostro": "rostro_607158.jpg"
     }
 }
