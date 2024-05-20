@@ -6,6 +6,7 @@ import random
 import string
 import tkinter as tk
 from tkinter import messagebox
+from datetime import datetime
 
 # Obtener la ruta al directorio actual
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -20,6 +21,9 @@ opciones_localidad = [
     "Rafael Uribe Uribe", "Ciudad Bolívar", "Sumapaz"
 ]
 
+# Lista de opciones para las drogas
+opciones_drogas = ["N/A", "Marihuana", "Cocaína", "Heroína", "LSD", "Éxtasis", "Metanfetamina", "Bazuco"]
+
 # Función para cargar la base de datos
 def cargar_base_de_datos():
     if os.path.exists(base_de_datos_file):
@@ -33,6 +37,25 @@ def guardar_base_de_datos(base_de_datos):
     with open(base_de_datos_file, 'w') as file:
         json.dump(base_de_datos, file, indent=4)
 
+# Función para calcular la edad actual
+def calcular_edad(fecha_nacimiento):
+    fecha_nac = datetime.strptime(fecha_nacimiento, "%d/%m/%Y")
+    hoy = datetime.now()
+    edad = hoy.year - fecha_nac.year - ((hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day))
+    return edad
+
+# Función para calcular años en situación de calle
+def calcular_anos_situacion_calle(ano_situacion_calle):
+    hoy = datetime.now()
+    anos_situacion_calle = hoy.year - int(ano_situacion_calle)
+    return anos_situacion_calle
+
+# Función para calcular años consumiendo drogas
+def calcular_anos_consumiendo_drogas(ano_inicio_drogas):
+    hoy = datetime.now()
+    anos_consumo_drogas = hoy.year - int(ano_inicio_drogas)
+    return anos_consumo_drogas
+
 # Función para mostrar el formulario y registrar un usuario
 def registrar_usuario():
     user_data = {}
@@ -40,20 +63,31 @@ def registrar_usuario():
     def guardar_datos():
         nombre = nombre_entry.get()
         apellido = apellido_entry.get()
-        edad = edad_entry.get()
         ciudad = ciudad_entry.get()
         fecha_nacimiento = fecha_nacimiento_entry.get()
-        tiempo_calle = tiempo_calle_entry.get()
+        ano_situacion_calle = ano_situacion_calle_entry.get()
+        ano_inicio_drogas = ano_inicio_drogas_entry.get()
+        primera_droga = primera_droga_var.get()
+        droga_frecuente_1 = droga_frecuente_1_var.get()
+        droga_frecuente_2 = droga_frecuente_2_var.get()
+        droga_frecuente_3 = droga_frecuente_3_var.get()
         localidad = localidad_var.get()
         ubicacion_frecuente = ubicacion_frecuente_entry.get()
 
-        if nombre and apellido and edad and ciudad and fecha_nacimiento and tiempo_calle and localidad and ubicacion_frecuente:
+        if nombre and apellido and ciudad and fecha_nacimiento and ano_situacion_calle and ano_inicio_drogas and localidad and ubicacion_frecuente:
             user_data["Nombres"] = nombre
             user_data["Apellidos"] = apellido
-            user_data["Edad"] = edad
             user_data["Fecha de Nacimiento"] = fecha_nacimiento
+            user_data["Edad"] = calcular_edad(fecha_nacimiento)
             user_data["Ciudad_Nacimiento"] = ciudad
-            user_data["Hace cuanto tiempo esta en situación de calle"] = tiempo_calle
+            user_data["Hace cuanto tiempo esta en situación de calle"] = ano_situacion_calle
+            user_data["Años en situación de calle"] = calcular_anos_situacion_calle(ano_situacion_calle)
+            user_data["En qué año comenzó a consumir drogas"] = ano_inicio_drogas
+            user_data["Años consumiendo drogas"] = calcular_anos_consumiendo_drogas(ano_inicio_drogas)
+            user_data["Primera droga consumida"] = primera_droga
+            user_data["Droga más frecuente"] = droga_frecuente_1
+            user_data["Droga medianamente frecuente"] = droga_frecuente_2
+            user_data["Droga menos frecuente"] = droga_frecuente_3
             user_data["Localidad"] = localidad
             user_data["Ubicación frecuente"] = ubicacion_frecuente
             dialogo.destroy()
@@ -87,23 +121,47 @@ def registrar_usuario():
     apellido_entry = tk.Entry(dialogo)
     apellido_entry.grid(row=4, column=1, padx=10, pady=5)
 
-    tk.Label(dialogo, text="Edad:").grid(row=5, column=0, padx=10, pady=5)
-    edad_entry = tk.Entry(dialogo)
-    edad_entry.grid(row=5, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Fecha de Nacimiento:").grid(row=6, column=0, padx=10, pady=5)
+    tk.Label(dialogo, text="Fecha de Nacimiento:").grid(row=5, column=0, padx=10, pady=5)
     fecha_nacimiento_entry = tk.Entry(dialogo)
-    fecha_nacimiento_entry.grid(row=6, column=1, padx=10, pady=5)
+    fecha_nacimiento_entry.grid(row=5, column=1, padx=10, pady=5)
 
-    tk.Label(dialogo, text="Ciudad de Nacimiento:").grid(row=7, column=0, padx=10, pady=5)
+    tk.Label(dialogo, text="Ciudad de Nacimiento:").grid(row=6, column=0, padx=10, pady=5)
     ciudad_entry = tk.Entry(dialogo)
-    ciudad_entry.grid(row=7, column=1, padx=10, pady=5)
+    ciudad_entry.grid(row=6, column=1, padx=10, pady=5)
 
-    tk.Label(dialogo, text="Hace cuanto tiempo esta en situación de calle:").grid(row=8, column=0, padx=10, pady=5)
-    tiempo_calle_entry = tk.Entry(dialogo)
-    tiempo_calle_entry.grid(row=8, column=1, padx=10, pady=5)
+    tk.Label(dialogo, text="Hace cuanto tiempo esta en situación de calle (Año):").grid(row=7, column=0, padx=10, pady=5)
+    ano_situacion_calle_entry = tk.Entry(dialogo)
+    ano_situacion_calle_entry.grid(row=7, column=1, padx=10, pady=5)
 
-    tk.Button(dialogo, text="Guardar", command=guardar_datos).grid(row=9, column=0, columnspan=2, padx=10, pady=10)
+    tk.Label(dialogo, text="En qué año comenzó a consumir drogas:").grid(row=8, column=0, padx=10, pady=5)
+    ano_inicio_drogas_entry = tk.Entry(dialogo)
+    ano_inicio_drogas_entry.grid(row=8, column=1, padx=10, pady=5)
+
+    tk.Label(dialogo, text="Primera droga consumida:").grid(row=9, column=0, padx=10, pady=5)
+    primera_droga_var = tk.StringVar(dialogo)
+    primera_droga_var.set(opciones_drogas[0])
+    primera_droga_dropdown = tk.OptionMenu(dialogo, primera_droga_var, *opciones_drogas)
+    primera_droga_dropdown.grid(row=9, column=1, padx=10, pady=5)
+
+    tk.Label(dialogo, text="Droga más frecuente:").grid(row=10, column=0, padx=10, pady=5)
+    droga_frecuente_1_var = tk.StringVar(dialogo)
+    droga_frecuente_1_var.set(opciones_drogas[0])
+    droga_frecuente_1_dropdown = tk.OptionMenu(dialogo, droga_frecuente_1_var, *opciones_drogas)
+    droga_frecuente_1_dropdown.grid(row=10, column=1, padx=10, pady=5)
+
+    tk.Label(dialogo, text="Droga medianamente frecuente:").grid(row=11, column=0, padx=10, pady=5)
+    droga_frecuente_2_var = tk.StringVar(dialogo)
+    droga_frecuente_2_var.set(opciones_drogas[0])
+    droga_frecuente_2_dropdown = tk.OptionMenu(dialogo, droga_frecuente_2_var, *opciones_drogas)
+    droga_frecuente_2_dropdown.grid(row=11, column=1, padx=10, pady=5)
+
+    tk.Label(dialogo, text="Droga menos frecuente:").grid(row=12, column=0, padx=10, pady=5)
+    droga_frecuente_3_var = tk.StringVar(dialogo)
+    droga_frecuente_3_var.set(opciones_drogas[0])
+    droga_frecuente_3_dropdown = tk.OptionMenu(dialogo, droga_frecuente_3_var, *opciones_drogas)
+    droga_frecuente_3_dropdown.grid(row=12, column=1, padx=10, pady=5)
+
+    tk.Button(dialogo, text="Guardar", command=guardar_datos).grid(row=13, column=0, columnspan=2, padx=10, pady=10)
 
     root.mainloop()
 
@@ -192,6 +250,7 @@ def capturar_rostro():
                                 f"Fecha de Nacimiento: {info_usuario['Fecha de Nacimiento']}\n"
                                 f"Ciudad de Nacimiento: {info_usuario['Ciudad_Nacimiento']}\n"
                                 f"Hace cuanto tiempo está en situación de calle: {info_usuario['Hace cuanto tiempo esta en situación de calle']}\n"
+                                f"Años en situación de calle: {info_usuario['Años en situación de calle']}\n"
                                 f"Ubicación frecuente: {info_usuario['Ubicación frecuente']}")
 
             # Cerrar la cámara y la aplicación
