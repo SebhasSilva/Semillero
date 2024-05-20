@@ -262,5 +262,37 @@
         "Ciudad_Nacimiento": "bogota",
         "ID": "607158",
         "Rostro": "rostro_607158.jpg"
+    },
+    "883075": {
+        "Nombres": "arturo",
+        "Apellidos": "melelo",
+        "Fecha de Nacimiento": "29/04/1997",
+        "Edad": 27,
+        "Ciudad_Nacimiento": "medellin",
+        "Hace cuanto tiempo esta en situaci\u00f3n de calle": "04/04/2018",
+        "A\u00f1os en situaci\u00f3n de calle": 6,
+        "Localidad": "Santa Fe",
+        "Ubicaci\u00f3n frecuente": "jimenez",
+        "ID": "883075",
+        "Rostro": "rostro_883075.jpg"
+    },
+    "542158": {
+        "Nombres": "Jimmy Sebastian",
+        "Apellidos": "Silva Mahecha",
+        "Fecha de Nacimiento": "29/04/1997",
+        "Edad": 27,
+        "Ciudad_Nacimiento": "Bogota",
+        "Hace cuanto tiempo esta en situaci\u00f3n de calle": "2018",
+        "A\u00f1os en situaci\u00f3n de calle": 6,
+        "En qu\u00e9 a\u00f1o comenz\u00f3 a consumir drogas": "2014",
+        "A\u00f1os consumiendo drogas": 10,
+        "Primera droga consumida": "Marihuana",
+        "Droga m\u00e1s frecuente": "Marihuana",
+        "Droga medianamente frecuente": "Coca\u00edna",
+        "Droga menos frecuente": "LSD",
+        "Localidad": "Bosa",
+        "Ubicaci\u00f3n frecuente": "El Porvenir",
+        "ID": "542158",
+        "Rostro": "rostro_542158.jpg"
     }
 }
