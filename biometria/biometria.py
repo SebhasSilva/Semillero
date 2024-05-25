@@ -66,7 +66,7 @@ def registrar_usuario():
         ciudad = ciudad_entry.get()
         fecha_nacimiento = fecha_nacimiento_entry.get()
         ano_situacion_calle = ano_situacion_calle_entry.get()
-        ano_inicio_drogas = ano_inicio_drogas_entry.get()
+        edad_inicio_drogas = edad_inicio_drogas_entry.get()
         primera_droga = primera_droga_var.get()
         droga_frecuente_1 = droga_frecuente_1_var.get()
         droga_frecuente_2 = droga_frecuente_2_var.get()
@@ -74,7 +74,7 @@ def registrar_usuario():
         localidad = localidad_var.get()
         ubicacion_frecuente = ubicacion_frecuente_entry.get()
 
-        if nombre and apellido and ciudad and fecha_nacimiento and ano_situacion_calle and ano_inicio_drogas and localidad and ubicacion_frecuente:
+        if nombre and apellido and ciudad and fecha_nacimiento and ano_situacion_calle and edad_inicio_drogas and localidad and ubicacion_frecuente:
             user_data["Nombres"] = nombre
             user_data["Apellidos"] = apellido
             user_data["Fecha de Nacimiento"] = fecha_nacimiento
@@ -82,8 +82,8 @@ def registrar_usuario():
             user_data["Ciudad_Nacimiento"] = ciudad
             user_data["Hace cuanto tiempo esta en situación de calle"] = ano_situacion_calle
             user_data["Años en situación de calle"] = calcular_anos_situacion_calle(ano_situacion_calle)
-            user_data["En qué año comenzó a consumir drogas"] = ano_inicio_drogas
-            user_data["Años consumiendo drogas"] = calcular_anos_consumiendo_drogas(ano_inicio_drogas)
+            user_data["Edad de inicio de drogas"] = edad_inicio_drogas
+            user_data["Años consumiendo drogas"] = calcular_anos_consumiendo_drogas(str(datetime.now().year - int(edad_inicio_drogas)))
             user_data["Primera droga consumida"] = primera_droga
             user_data["Droga más frecuente"] = droga_frecuente_1
             user_data["Droga medianamente frecuente"] = droga_frecuente_2
@@ -133,9 +133,9 @@ def registrar_usuario():
     ano_situacion_calle_entry = tk.Entry(dialogo)
     ano_situacion_calle_entry.grid(row=7, column=1, padx=10, pady=5)
 
-    tk.Label(dialogo, text="En qué año comenzó a consumir drogas:").grid(row=8, column=0, padx=10, pady=5)
-    ano_inicio_drogas_entry = tk.Entry(dialogo)
-    ano_inicio_drogas_entry.grid(row=8, column=1, padx=10, pady=5)
+    tk.Label(dialogo, text="¿A qué edad comenzó a consumir drogas?:").grid(row=8, column=0, padx=10, pady=5)
+    edad_inicio_drogas_entry = tk.Entry(dialogo)
+    edad_inicio_drogas_entry.grid(row=8, column=1, padx=10, pady=5)
 
     tk.Label(dialogo, text="Primera droga consumida:").grid(row=9, column=0, padx=10, pady=5)
     primera_droga_var = tk.StringVar(dialogo)
@@ -251,6 +251,8 @@ def capturar_rostro():
                                 f"Ciudad de Nacimiento: {info_usuario['Ciudad_Nacimiento']}\n"
                                 f"Hace cuanto tiempo está en situación de calle: {info_usuario['Hace cuanto tiempo esta en situación de calle']}\n"
                                 f"Años en situación de calle: {info_usuario['Años en situación de calle']}\n"
+                                f"Edad de inicio de drogas: {info_usuario['Edad de inicio de drogas']}\n"
+                                f"Años consumiendo drogas: {info_usuario['Años consumiendo drogas']}\n"
                                 f"Ubicación frecuente: {info_usuario['Ubicación frecuente']}")
 
             # Cerrar la cámara y la aplicación
