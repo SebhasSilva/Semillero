@@ -37,8 +37,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users',
+    'rest_framework',
     'photos',
 ]
+
+# Indicar a Django que use nuestro modelo de usuario personalizado
+AUTH_USER_MODEL = 'users.CustomUser'
+
+# Configurar el sistema de autenticación y recuperación de contraseña
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Solo para desarrollo
 
 # Configurar la ruta de media
 MEDIA_URL = '/media/'
