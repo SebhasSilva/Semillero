@@ -1,4 +1,4 @@
 from django.contrib import admin
-from .models import Photo
+from .models import CustomUser
 
-admin.site.register(Photo)
+admin.site.register(CustomUser)
