@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}Photo List{% endblock %}
+
+{% block content %}
+  <h2>Photo List</h2>
+  <ul>
+    {% for photo in photos %}
+      <li><img src="{{ photo.file.url }}" alt="{{ photo.description }}"></li>
+    {% endfor %}
+  </ul>
+{% endblock %}
