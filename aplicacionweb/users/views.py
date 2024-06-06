@@ -5,6 +5,9 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from .forms import CustomUserCreationForm
 
+def home(request):
+    return render(request, 'users/home.html')
+
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
