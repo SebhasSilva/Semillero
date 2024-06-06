@@ -46,3 +46,20 @@ button {
 button:hover {
     background-color: #555;
 }
+
+#photo-upload-container {
+    border: 2px dashed #ddd;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+}
+
+#photo-upload-container label {
+    font-size: 24px;
+    color: #aaa;
+}
+
+#photo-preview img {
+    max-width: 100px;
+    margin: 10px;
+}
