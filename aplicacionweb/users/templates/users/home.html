@@ -1,12 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-</head>
-<body>
+{% extends 'users/base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
     <h1>Bienvenidos a nuestra aplicación</h1>
-    <p><a href="{% url 'login' %}">Inicia Sesión</a> O <a href="{% url 'register' %}">Registrate</a></p>
-</body>
-</html>
+    <p>
+        <a href="{% url 'login' %}">Inicia Sesión</a> o 
+        <a href="{% url 'register' %}">Regístrate</a>
+    </p>
+{% endblock %}
