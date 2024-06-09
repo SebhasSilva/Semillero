@@ -3,9 +3,10 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<form method="post">
+<form method="post" class="form-group">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Login</button>
+    <button type="submit" class="btn btn-primary">Ingreso</button>
+    <button type="button" class="btn btn-secondary" onclick="window.history.back()">Atrás</button>
 </form>
 {% endblock %}

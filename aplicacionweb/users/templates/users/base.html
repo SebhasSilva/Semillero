@@ -5,17 +5,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Pagina para familias en la calle{% endblock %}</title>
+    <title>{% block title %}Red Social{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
     <header>
-        <h1>My Website</h1>
+        <h1>Red Social</h1>
     </header>
     <main>
         {% block content %}
         {% endblock %}
     </main>
+    <footer>
+        <p>&copy; 2024 Red Social. All rights reserved.</p>
+    </footer>
     <script src="{% static 'js/scripts.js' %}"></script>
 </body>
 </html>
