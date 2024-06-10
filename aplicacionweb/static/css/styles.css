@@ -1,5 +1,3 @@
-/* static/css/styles.css */
-
 body {
     font-family: 'Arial', sans-serif;
     background-color: #f4f4f4;
@@ -13,7 +11,7 @@ body {
 }
 
 header {
-    background-color: #bab9b9;
+    background-color: #343a40;
     color: white;
     width: 100%;
     padding: 1rem 0;
@@ -26,12 +24,21 @@ main {
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
+    text-align: left;
+    max-width: 600px;
+    width: 90%; /* Adjusted to 90% to ensure responsiveness */
+    margin: 1rem auto; /* Centering the main content */
 }
 
 h1 {
     font-size: 2rem;
     color: #060606;
+}
+
+h2 {
+    font-size: 1.5rem;
+    color: #343a40;
+    margin-bottom: 1.5rem;
 }
 
 p {
@@ -49,11 +56,83 @@ a:hover {
     text-decoration: underline;
 }
 
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%; /* Ensure the form takes the full width of its container */
+}
+
+.form-group {
+    margin-bottom: 1.5rem; /* Adds space between form groups */
+    width: 100%;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem; /* Adds space between label and input */
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%; /* Make the input take the full width */
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0.5rem 0; /* Adds space between buttons */
+    width: 100%; /* Ensure buttons are full width */
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
 footer {
     margin-top: auto;
-    background-color: #bab9b9;
-    color: rgb(222, 20, 20);
+    background-color: #343a40;
+    color: white;
     width: 100%;
     text-align: center;
     padding: 0.5rem 0;
+    position: fixed;
+    bottom: 0;
+}
+
+.footer p {
+    margin: 0;
+    color: rgb(222, 20, 20);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    main {
+        padding: 1rem; /* Reduce padding on small screens */
+    }
+
+    .form-group input {
+        padding: 0.5rem; /* Adjust padding for small screens */
+    }
+
+    button {
+        padding: 0.5rem 1rem; /* Adjust padding for small screens */
+        font-size: 0.9rem; /* Adjust font size for small screens */
+    }
 }
