@@ -1,138 +1,159 @@
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f4f4f4;
+    font-family: 'Arial', sans-serif; /* Fuente del texto */
+    background-color: #f4f4f4; /* Color de fondo */
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100vh;
+    justify-content: flex-start; /* Alineación del contenido al inicio */
+    min-height: 100vh; /* Altura mínima del 100% de la vista */
 }
 
+/* Estilos para el encabezado */
 header {
-    background-color: #343a40;
-    color: white;
-    width: 100%;
-    padding: 1rem 0;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #343a40; /* Color de fondo del encabezado */
+    color: white; /* Color del texto del encabezado */
+    width: 100%; /* Anchura completa */
+    padding: 0rem 0; /* Espaciado interno */
+    text-align: center; /* Alineación del texto */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra del encabezado */
+    position: fixed; /* Encabezado fijo en la parte superior */
+    top: 0; /* Posición en la parte superior */
+    z-index: 1000; /* Asegura que el encabezado esté por encima de otros elementos */
 }
 
+/* Estilos para el contenido principal */
 main {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: left;
-    max-width: 600px;
-    width: 90%; /* Adjusted to 90% to ensure responsiveness */
-    margin: 1rem auto; /* Centering the main content */
+    background-color: white; /* Color de fondo del contenido */
+    padding: 1rem; /* Espaciado interno reducido */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra del contenido */
+    text-align: left; /* Alineación del texto */
+    max-width: 500px; /* Anchura máxima reducida */
+    width: 90%; /* Anchura del 90% del contenedor */
+    margin: 6rem auto 2rem; /* Márgenes ajustados para el encabezado fijo */
+    box-sizing: border-box; /* Incluye padding y borde en el tamaño total del elemento */
 }
 
+/* Estilos para el título principal */
 h1 {
-    font-size: 2rem;
-    color: #060606;
+    font-size: 2rem; /* Tamaño de fuente del título */
+    color: #060606; /* Color del texto del título */
 }
 
+/* Estilos para el título secundario */
 h2 {
-    font-size: 1.5rem;
-    color: #343a40;
-    margin-bottom: 1.5rem;
+    font-size: 1.5rem; /* Tamaño de fuente del subtítulo */
+    color: #343a40; /* Color del texto del subtítulo */
+    margin-bottom: 1rem; /* Espaciado inferior */
 }
 
+/* Estilos para los párrafos */
 p {
-    font-size: 1rem;
-    color: #666;
+    font-size: 1rem; /* Tamaño de fuente de los párrafos */
+    color: #666; /* Color del texto de los párrafos */
 }
 
+/* Estilos para los enlaces */
 a {
-    text-decoration: none;
-    color: #b15111;
-    margin: 0 0.5rem;
+    text-decoration: none; /* Sin subrayado en los enlaces */
+    color: #b15111; /* Color del texto de los enlaces */
+    margin: 0 0.5rem; /* Márgenes a los lados de los enlaces */
 }
 
+/* Estilo de enlace al pasar el cursor */
 a:hover {
-    text-decoration: underline;
+    text-decoration: underline; /* Subrayado al pasar el cursor */
 }
 
+/* Estilos para el formulario */
 form {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%; /* Ensure the form takes the full width of its container */
+    width: 100%; /* Anchura completa del formulario */
 }
 
+/* Estilos para los grupos de formulario */
 .form-group {
-    margin-bottom: 1.5rem; /* Adds space between form groups */
-    width: 100%;
+    margin-bottom: 1rem; /* Espaciado inferior entre grupos */
+    width: 100%; /* Anchura completa de los grupos */
 }
 
+/* Estilos para las etiquetas de los grupos de formulario */
 .form-group label {
     display: block;
-    margin-bottom: 0.5rem; /* Adds space between label and input */
-    font-weight: bold;
+    margin-bottom: 0.5rem; /* Espaciado inferior de las etiquetas */
+    font-weight: bold; /* Texto en negrita */
 }
 
+/* Estilos para los campos de entrada del formulario */
 .form-group input {
-    width: 100%; /* Make the input take the full width */
+    width: 100%; /* Anchura completa de los campos de entrada */
     padding: 0.5rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    box-sizing: border-box;
+    border: 1px solid #ced4da; /* Borde de los campos de entrada */
+    border-radius: 4px; /* Bordes redondeados */
+    box-sizing: border-box; /* Incluye padding y borde en el tamaño total del elemento */
 }
 
+/* Estilos para los botones */
 button {
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem 1rem; /* Espaciado interno de los botones */
     border: none;
-    border-radius: 4px;
+    border-radius: 9px; /* Bordes redondeados */
     cursor: pointer;
-    margin: 0.5rem 0; /* Adds space between buttons */
-    width: 100%; /* Ensure buttons are full width */
+    margin: 0.5rem 0; /* Márgenes superior e inferior */
+    width: 20%; /* Anchura completa de los botones */
+    font-size: 1rem; /* Tamaño de fuente de los botones */
 }
 
+/* Estilos para el botón principal */
 .btn-primary {
-    background-color: #007bff;
-    color: white;
+    background-color: #007bff; /* Color de fondo del botón principal */
+    color: white; /* Color del texto del botón principal */
 }
 
+/* Estilos para el botón secundario */
 .btn-secondary {
-    background-color: #6c757d;
-    color: white;
+    background-color: #6c757d; /* Color de fondo del botón secundario */
+    color: white; /* Color del texto del botón secundario */
 }
 
+/* Estilo del botón al pasar el cursor */
 button:hover {
-    opacity: 0.9;
+    opacity: 0.9; /* Opacidad reducida al pasar el cursor */
 }
 
+/* Estilos para el pie de página */
 footer {
-    margin-top: auto;
-    background-color: #343a40;
-    color: white;
-    width: 100%;
-    text-align: center;
-    padding: 0.5rem 0;
-    position: fixed;
-    bottom: 0;
+    background-color: #343a40; /* Color de fondo del pie de página */
+    color: white; /* Color del texto del pie de página */
+    width: 100%; /* Anchura completa del pie de página */
+    text-align: center; /* Alineación del texto */
+    padding: 0rem 0; /* Espaciado interno */
+    position: fixed; /* Pie de página fijo en la parte inferior */
+    bottom: 0; /* Posición en la parte inferior */
 }
 
+/* Estilos para el texto del pie de página */
 .footer p {
     margin: 0;
-    color: rgb(222, 20, 20);
+    color: rgb(222, 20, 20); /* Color del texto del pie de página */
 }
 
-/* Responsive adjustments */
+/* Ajustes responsivos para pantallas pequeñas */
 @media (max-width: 600px) {
     main {
-        padding: 1rem; /* Reduce padding on small screens */
+        padding: 0.5rem; /* Reducir padding en pantallas pequeñas */
     }
 
     .form-group input {
-        padding: 0.5rem; /* Adjust padding for small screens */
+        padding: 0.5rem; /* Ajustar padding en pantallas pequeñas */
     }
 
     button {
-        padding: 0.5rem 1rem; /* Adjust padding for small screens */
-        font-size: 0.9rem; /* Adjust font size for small screens */
+        padding: 0.5rem 1rem; /* Ajustar padding en pantallas pequeñas */
+        font-size: 0.9rem; /* Ajustar tamaño de fuente en pantallas pequeñas */
     }
 }
