@@ -1,11 +1,12 @@
-# users/views.py
-
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView, PasswordResetDoneView, PasswordResetCompleteView
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from .forms import CustomUserCreationForm
+from django.contrib.auth.decorators import login_required
+from photos.forms import PhotoUploadForm  # Asumimos que tienes un formulario para subir fotos
+from photos.models import Photo  # Asumimos que tienes un modelo Photo para guardar las fotos
 
 # Vista para la página de inicio
 def home(request):
@@ -16,8 +17,8 @@ def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()  # Guarda el usuario
-            username = form.cleaned_data.get('email')  # Cambiado a 'email' ya que el formulario utiliza el email para autenticación
+            user = form.save()
+            username = form.cleaned_data.get('email')
             password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=password)
             if user is not None:
@@ -37,7 +38,7 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('photo_upload')
+                return redirect('profile')
     else:
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})
@@ -67,3 +68,19 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 # Vista personalizada para la finalización del reseteo de contraseña
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'users/password_reset_complete.html'
+
+# Vista para el perfil de usuario con subida de fotos
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        form = PhotoUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            photo = form.save(commit=False)
+            photo.user = request.user
+            photo.save()
+            return redirect('profile')
+    else:
+        form = PhotoUploadForm()
+    
+    photos = Photo.objects.filter(user=request.user)
+    return render(request, 'users/profile.html', {'form': form, 'photos': photos})
