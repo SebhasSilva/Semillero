@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Perfil</title>
+</head>
+<body>
+    <h1>Perfil de Usuario</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Subir foto</button>
+    </form>
+
+    <h2>Fotos subidas</h2>
+    <ul>
+        {% for photo in photos %}
+            <li><img src="{{ photo.image.url }}" alt="Photo"></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
