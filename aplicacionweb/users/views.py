@@ -3,10 +3,10 @@ from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, Set
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView, PasswordResetDoneView, PasswordResetCompleteView
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from .forms import CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
-from photos.forms import PhotoUploadForm  # Asumimos que tienes un formulario para subir fotos
-from photos.models import Photo  # Asumimos que tienes un modelo Photo para guardar las fotos
+from .forms import CustomUserCreationForm
+from photos.forms import PhotoUploadForm  # Asegúrate de tener este formulario
+from photos.models import Photo  # Asegúrate de tener este modelo
 
 # Vista para la página de inicio
 def home(request):
@@ -18,7 +18,7 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            username = form.cleaned_data.get('email')
+            username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=password)
             if user is not None:
