@@ -4,8 +4,12 @@ import random
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15)
+    birth_date = models.DateField()
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    
     # Añadir otros campos necesarios
-
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if not hasattr(self, 'profile'):
