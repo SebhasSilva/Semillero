@@ -1,13 +1,14 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import random
+from datetime import date
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=15)
-    birth_date = models.DateField()
-    address = models.CharField(max_length=255)
-    city = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15, default='0000000000')
+    birth_date = models.DateField(default=date.today)
+    address = models.CharField(max_length=255, default='Sin dirección')
+    city = models.CharField(max_length=100, default='Sin ciudad')
     
     # Añadir otros campos necesarios
     def save(self, *args, **kwargs):
