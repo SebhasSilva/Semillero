@@ -157,3 +157,51 @@ footer {
         font-size: 0.9rem; /* Ajustar tamaño de fuente en pantallas pequeñas */
     }
 }
+
+/* Estilos específicos para la página de perfil y el álbum de fotos */
+.profile-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.profile-details {
+    flex: 1;
+}
+
+.photo-album {
+    flex: 1;
+    max-width: 400px; /* Ajusta el tamaño según tus necesidades */
+}
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 10px;
+    overflow-y: auto;
+    max-height: 500px; /* Ajusta el tamaño según tus necesidades */
+    border: 1px solid #ddd; /* Borde alrededor de la cuadrícula */
+    padding: 10px; /* Espaciado interno */
+    background-color: #fff; /* Color de fondo */
+}
+
+.photo-item img {
+    width: 100%;
+    height: auto;
+    max-width: 100px; /* Ajusta el tamaño según tus necesidades */
+    max-height: 100px; /* Ajusta el tamaño según tus necesidades */
+    border-radius: 4px; /* Bordes redondeados */
+}
+
+.photo-item {
+    position: relative;
+}
+
+.photo-item form {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 2px 5px;
+    border-radius: 4px; /* Bordes redondeados */
+}
