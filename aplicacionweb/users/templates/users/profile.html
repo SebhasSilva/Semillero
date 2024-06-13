@@ -1,23 +1,77 @@
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Perfil</title>
+    <style>
+        .profile-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .profile-details {
+            flex: 1;
+        }
+
+        .photo-album {
+            flex: 1;
+            max-width: 400px; /* Ajusta el tamaño según tus necesidades */
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 10px;
+            overflow-y: auto;
+            max-height: 500px; /* Ajusta el tamaño según tus necesidades */
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: auto;
+            max-width: 100px; /* Ajusta el tamaño según tus necesidades */
+            max-height: 100px; /* Ajusta el tamaño según tus necesidades */
+        }
+
+        .photo-item {
+            position: relative;
+        }
+
+        .photo-item form {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 2px 5px;
+        }
+    </style>
 </head>
 <body>
     <h1>Perfil de Usuario</h1>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Subir foto</button>
-    </form>
+    <div class="profile-container">
+        <!-- Perfil del usuario y formulario de subida de fotos -->
+        <div class="profile-details">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Subir foto</button>
+            </form>
+        </div>
 
-    <h2>Fotos subidas</h2>
-    <ul>
-        {% for photo in photos %}
-            <li><img src="{{ photo.image.url }}" alt="Photo"></li>
-        {% endfor %}
-    </ul>
+        <!-- Álbum de fotos -->
+        <div class="photo-album">
+            <h2>Fotos subidas</h2>
+            <div class="photo-grid">
+                {% for photo in photos %}
+                    <div class="photo-item">
+                        <img src="{{ photo.image.url }}" alt="Foto de {{ user.username }}">
+                        <form method="post" action="{% url 'delete_photo' photo.id %}">
+                            {% csrf_token %}
+                            <button type="submit">Eliminar</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </body>
 </html>
