@@ -1,7 +1,7 @@
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView, PasswordResetDoneView, PasswordResetCompleteView
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm
@@ -84,3 +84,12 @@ def profile(request):
     
     photos = Photo.objects.filter(user=request.user)
     return render(request, 'users/profile.html', {'form': form, 'photos': photos})
+
+# Vista para eliminar una foto
+@login_required
+def delete_photo(request, photo_id):
+    photo = get_object_or_404(Photo, id=photo_id, user=request.user)
+    if request.method == 'POST':
+        photo.delete()
+        return redirect('profile')
+    return render(request, 'users/profile.html', {'form': PhotoUploadForm(), 'photos': Photo.objects.filter(user=request.user)})
