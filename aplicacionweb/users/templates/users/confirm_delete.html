@@ -1,0 +1,12 @@
+{% extends "base_generic.html" %}
+<form method="post">
+    {% csrf_token %}
+{% block content %}
+<h2>¿Estás seguro de que deseas eliminar esta foto?</h2>
+<img src="{{ photo.image.url }}" alt="Foto de {{ user.username }}">
+<form method="POST">
+    {% csrf_token %}
+    <button type="submit">Eliminar</button>
+    <a href="{% url 'profile' %}">Cancelar</a>
+</form>
+{% endblock %}
