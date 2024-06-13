@@ -43,6 +43,30 @@
             background: rgba(255, 255, 255, 0.7);
             padding: 2px 5px;
         }
+
+        /* Añadir estilos para la página */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        button:hover {
+            background-color: #ddd;
+        }
     </style>
 </head>
 <body>
@@ -69,6 +93,8 @@
                             <button type="submit">Eliminar</button>
                         </form>
                     </div>
+                {% empty %}
+                    <p>No se han subido fotos.</p>
                 {% endfor %}
             </div>
         </div>
