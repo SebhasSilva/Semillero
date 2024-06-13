@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Eliminar Foto</title>
+    <style>
+        .confirm-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .confirm-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .confirm-box h1 {
+            font-size: 1.5rem;
+            color: #343a40;
+        }
+        .confirm-box button, .confirm-box a {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 1rem;
+            text-decoration: none;
+            color: white;
+        }
+        .confirm-box button {
+            background-color: #007bff;
+        }
+        .confirm-box a {
+            background-color: #6c757d;
+        }
+        .confirm-box button:hover, .confirm-box a:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="confirm-container">
+        <div class="confirm-box">
+            <h1>¿Estás seguro de que deseas eliminar esta foto?</h1>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit">Sí, eliminar</button>
+                <a href="{% url 'profile' %}">No, cancelar</a>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

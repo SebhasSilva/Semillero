@@ -36,36 +36,55 @@
             position: relative;
         }
 
-        .photo-item form {
+        .delete-btn {
             position: absolute;
-            bottom: 5px;
+            top: 5px;
             right: 5px;
-            background: rgba(255, 255, 255, 0.7);
-            padding: 2px 5px;
-        }
-
-        /* Añadir estilos para la página */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-
-        h1 {
-            text-align: center;
-        }
-
-        button {
-            padding: 0.5rem 1rem;
+            background: transparent;
             border: none;
-            border-radius: 4px;
+            font-size: 18px;
             cursor: pointer;
-            margin-top: 5px;
+            color: black;
         }
 
-        button:hover {
-            background-color: #ddd;
+        .delete-btn:hover {
+            color: red;
+        }
+
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+        }
+
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .modal-close:hover,
+        .modal-close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -88,16 +107,56 @@
                 {% for photo in photos %}
                     <div class="photo-item">
                         <img src="{{ photo.image.url }}" alt="Foto de {{ user.username }}">
-                        <form method="post" action="{% url 'delete_photo' photo.id %}">
-                            {% csrf_token %}
-                            <button type="submit">Eliminar</button>
-                        </form>
+                        <button class="delete-btn" data-photo-id="{{ photo.id }}">X</button>
                     </div>
-                {% empty %}
-                    <p>No se han subido fotos.</p>
                 {% endfor %}
             </div>
         </div>
     </div>
+
+    <!-- Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <p>¿Estás seguro de que quieres eliminar esta foto?</p>
+            <form id="deletePhotoForm" method="post">
+                {% csrf_token %}
+                <button type="submit">Sí</button>
+                <button type="button" id="cancelDelete">No</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var deleteButtons = document.querySelectorAll('.delete-btn');
+            var modal = document.getElementById('deleteModal');
+            var closeModal = document.querySelector('.modal-close');
+            var cancelDelete = document.getElementById('cancelDelete');
+            var deleteForm = document.getElementById('deletePhotoForm');
+            
+            deleteButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var photoId = this.getAttribute('data-photo-id');
+                    deleteForm.action = '/photos/delete/' + photoId + '/';
+                    modal.style.display = 'block';
+                });
+            });
+
+            closeModal.addEventListener('click', function () {
+                modal.style.display = 'none';
+            });
+
+            cancelDelete.addEventListener('click', function () {
+                modal.style.display = 'none';
+            });
+
+            window.addEventListener('click', function (event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
