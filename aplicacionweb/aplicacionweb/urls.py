@@ -20,12 +20,13 @@ from django.urls import path, include
 from users import views as user_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('users/', include('users.urls')),
-    path('photos/', include('photos.urls')),
-    path('', user_views.home, name='home'),  # Ruta principal
+    path('admin/', admin.site.urls),  # Ruta para el administrador de Django
+    path('users/', include('users.urls')),  # Incluir las URLs de la aplicación de usuarios
+    path('photos/', include('photos.urls')),  # Incluir las URLs de la aplicación de fotos
+    path('', user_views.home, name='home'),  # Ruta principal que apunta a la vista home de los usuarios
 ]
 
+# Si está en modo DEBUG, servir archivos estáticos y de medios desde el directorio del proyecto
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
