@@ -1,6 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
+from django.views.generic import DeleteView
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from .models import Photo
@@ -37,3 +39,14 @@ def upload_photos(request):
         return JsonResponse({'success': True, 'photos': photo_urls})
 
     return JsonResponse({'success': False})
+
+class PhotoDeleteView(DeleteView):
+    model = Photo
+    template_name = 'photos/photo_confirm_delete.html'
+    success_url = reverse_lazy('profile')  # Redirige al perfil del usuario después de eliminar
+
+    def get_queryset(self):
+        """
+        Limita la eliminación a las fotos del usuario actual.
+        """
+        return self.model.objects.filter(user=self.request.user)
