@@ -10,7 +10,6 @@ class CustomUser(AbstractUser):
     address = models.CharField(max_length=255, default='Sin dirección')
     city = models.CharField(max_length=100, default='Sin ciudad')
     
-    # Añadir otros campos necesarios
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if not hasattr(self, 'profile'):
