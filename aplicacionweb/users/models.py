@@ -18,7 +18,7 @@ class CustomUser(AbstractUser):
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     id_number = models.CharField(max_length=6, unique=True, blank=True)
-    photos = models.ManyToManyField('Photo')
+    photos = models.ManyToManyField('photos.Photo')
 
     def save(self, *args, **kwargs):
         if not self.id_number:
@@ -31,6 +31,17 @@ class Profile(models.Model):
             if not Profile.objects.filter(id_number=id_number).exists():
                 return id_number
 
-class Photo(models.Model):
-    image = models.ImageField(upload_to='photos/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+class StreetPerson(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    birth_date = models.DateField()
+    birth_city = models.CharField(max_length=100)
+    alias = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class StreetPersonHistory(models.Model):
+    street_person = models.ForeignKey(StreetPerson, on_delete=models.CASCADE)
+    modified_at = models.DateTimeField(auto_now_add=True)
+    modified_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    changes = models.JSONField()
