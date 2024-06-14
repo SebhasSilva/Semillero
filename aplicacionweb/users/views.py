@@ -5,8 +5,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm
-from photos.forms import PhotoUploadForm  # Asegúrate de tener este formulario
-from photos.models import Photo  # Asegúrate de tener este modelo
+from photos.forms import PhotoUploadForm
+from photos.models import Photo
 
 # Vista para la página de inicio
 def home(request):
