@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser
+from .models import CustomUser, StreetPerson
 
 class CustomUserCreationForm(UserCreationForm):
     username = forms.CharField(
@@ -31,3 +31,13 @@ class CustomUserCreationForm(UserCreationForm):
             'password2'
         )
 
+class StreetPersonForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=30, required=True, label='Nombres')
+    last_name = forms.CharField(max_length=30, required=True, label='Apellidos')
+    birth_date = forms.DateField(widget=forms.TextInput(attrs={'type': 'date'}), required=True, label='Fecha de nacimiento')
+    birth_city = forms.CharField(max_length=100, required=True, label='Ciudad de nacimiento')
+    alias = forms.CharField(max_length=100, required=True, label='Alias')
+
+    class Meta:
+        model = StreetPerson
+        fields = ['first_name', 'last_name', 'birth_date', 'birth_city', 'alias']
