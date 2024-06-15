@@ -3,6 +3,10 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, StreetPerson
 
 class CustomUserCreationForm(UserCreationForm):
+    GENDER_CHOICES = [
+        ('M', 'Masculino'),
+        ('F', 'Femenino'),
+    ]
     username = forms.CharField(
         max_length=150,
         required=True,
@@ -15,6 +19,7 @@ class CustomUserCreationForm(UserCreationForm):
     birth_date = forms.DateField(widget=forms.TextInput(attrs={'type': 'date'}), required=True)
     address = forms.CharField(max_length=255, required=True)
     city = forms.CharField(max_length=100, required=True)
+    gender = forms.ChoiceField(choices=GENDER_CHOICES, required=True)
 
     class Meta:
         model = CustomUser
@@ -27,17 +32,23 @@ class CustomUserCreationForm(UserCreationForm):
             'birth_date',
             'address',
             'city',
+            'gender',
             'password1',
             'password2'
         )
 
 class StreetPersonForm(forms.ModelForm):
+    GENDER_CHOICES = [
+        ('M', 'Masculino'),
+        ('F', 'Femenino'),
+    ]
     first_name = forms.CharField(max_length=30, required=True, label='Nombres')
     last_name = forms.CharField(max_length=30, required=True, label='Apellidos')
     birth_date = forms.DateField(widget=forms.TextInput(attrs={'type': 'date'}), required=True, label='Fecha de nacimiento')
     birth_city = forms.CharField(max_length=100, required=True, label='Ciudad de nacimiento')
     alias = forms.CharField(max_length=100, required=True, label='Alias')
+    gender = forms.ChoiceField(choices=GENDER_CHOICES, required=True, label='Género')
 
     class Meta:
         model = StreetPerson
-        fields = ['first_name', 'last_name', 'birth_date', 'birth_city', 'alias']
+        fields = ['first_name', 'last_name', 'birth_date', 'birth_city', 'alias', 'gender']

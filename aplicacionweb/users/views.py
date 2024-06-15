@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm, StreetPersonForm
 from photos.forms import PhotoUploadForm
 from photos.models import Photo
-from .models import StreetPerson, StreetPersonHistory
+from .models import CustomUser, StreetPerson, StreetPersonHistory
 
 # Vista para la página de inicio
 def home(request):
@@ -89,17 +89,21 @@ def profile(request):
             street_person_form = StreetPersonForm(request.POST)
             if street_person_form.is_valid():
                 street_person_data = street_person_form.save(commit=False)
-                street_person_data.user = request.user
+                street_person_data.profile = request.user.profile  # Asignar el perfil del usuario
                 street_person_data.save()
 
                 # Guardar el historial de cambios
                 StreetPersonHistory.objects.create(
                     street_person=street_person_data,
-                    first_name=street_person_data.first_name,
-                    last_name=street_person_data.last_name,
-                    birth_date=street_person_data.birth_date,
-                    birth_city=street_person_data.birth_city,
-                    alias=street_person_data.alias
+                    modified_by=request.user,
+                    changes={
+                        'first_name': street_person_data.first_name,
+                        'last_name': street_person_data.last_name,
+                        'birth_date': street_person_data.birth_date,
+                        'birth_city': street_person_data.birth_city,
+                        'alias': street_person_data.alias,
+                        'gender': street_person_data.gender,
+                    }
                 )
 
                 return redirect('profile')
