@@ -8,13 +8,9 @@
             justify-content: space-between;
         }
 
-        .profile-details {
+        .profile-details, .street-person-form, .photo-album {
             flex: 1;
-        }
-
-        .photo-album {
-            flex: 1;
-            max-width: 400px; /* Ajusta el tamaño según tus necesidades */
+            margin: 0 10px;
         }
 
         .photo-grid {
@@ -91,18 +87,32 @@
 <body>
     <h1>Perfil de Usuario</h1>
     <div class="profile-container">
-        <!-- Perfil del usuario y formulario de subida de fotos -->
+        <!-- Información básica del usuario -->
         <div class="profile-details">
-            <form method="post" enctype="multipart/form-data">
+            <h2>Información del Usuario</h2>
+            <p>Usuario: {{ user.username }}</p>
+            <p>Nombre: {{ user.first_name }} {{ user.last_name }}</p>
+            <p>Correo: {{ user.email }}</p>
+        </div>
+
+        <!-- Formulario de la persona en situación de calle -->
+        <div class="street-person-form">
+            <h2>Persona en situación de calle</h2>
+            <form method="post">
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit">Subir foto</button>
+                {{ street_person_form.as_p }}
+                <button type="submit">Enviar</button>
             </form>
         </div>
 
         <!-- Álbum de fotos -->
         <div class="photo-album">
             <h2>Fotos subidas</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ photo_form.as_p }}
+                <button type="submit">Subir foto</button>
+            </form>
             <div class="photo-grid">
                 {% for photo in photos %}
                     <div class="photo-item">
