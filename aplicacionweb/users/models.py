@@ -5,11 +5,16 @@ import random
 
 # Custom User model
 class CustomUser(AbstractUser):
+    GENDER_CHOICES = [
+        ('M', 'Masculino'),
+        ('F', 'Femenino'),
+    ]
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15, default='0000000000')
     birth_date = models.DateField(default=date.today)
     address = models.CharField(max_length=255, default='Sin dirección')
     city = models.CharField(max_length=100, default='Sin ciudad')
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -35,12 +40,17 @@ class Profile(models.Model):
 
 # Street Person model
 class StreetPerson(models.Model):
+    GENDER_CHOICES = [
+        ('M', 'Masculino'),
+        ('F', 'Femenino'),
+    ]
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     birth_date = models.DateField()
     birth_city = models.CharField(max_length=100)
     alias = models.CharField(max_length=50)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 # Street Person History model
