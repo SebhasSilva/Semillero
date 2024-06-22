@@ -82,9 +82,22 @@
             text-decoration: none;
             cursor: pointer;
         }
+
+        .logout-button-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
     </style>
 </head>
 <body>
+    <div class="logout-button-container">
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Cerrar Sesión</button>
+        </form>
+    </div>
+
     <h1>Perfil de Usuario</h1>
     <div class="profile-container">
         <!-- Información básica del usuario -->
@@ -93,10 +106,6 @@
             <p>Usuario: {{ user.username }}</p>
             <p>Nombre: {{ user.first_name }} {{ user.last_name }}</p>
             <p>Correo: {{ user.email }}</p>
-            <form method="post" action="{% url 'logout' %}">
-                {% csrf_token %}
-                <button type="submit">Salir</button>
-            </form>
         </div>
 
         <!-- Formulario de la persona en situación de calle -->
