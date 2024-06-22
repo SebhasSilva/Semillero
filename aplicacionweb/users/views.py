@@ -83,7 +83,6 @@ def profile(request):
             if photo_form.is_valid():
                 photo = photo_form.save(commit=False)
                 photo.user = request.user
-                photo.profile = request.user.profile  # Asignar el perfil del usuario a la foto
                 photo.save()
                 return redirect('profile')
         elif 'street_person_form_submit' in request.POST:
