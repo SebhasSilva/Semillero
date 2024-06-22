@@ -25,8 +25,7 @@ class CustomUser(AbstractUser):
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     id_number = models.CharField(max_length=6, unique=True, blank=True)
-    photos = models.ManyToManyField('photos.Photo', blank=True)
-
+    
     def save(self, *args, **kwargs):
         if not self.id_number:
             self.id_number = self.generate_unique_id()
@@ -59,3 +58,7 @@ class StreetPersonHistory(models.Model):
     modified_at = models.DateTimeField(auto_now_add=True)
     modified_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     changes = models.JSONField()
+
+# Importar aquí para evitar la circularidad
+from photos.models import Photo
+Profile.add_to_class('photos', models.ManyToManyField(Photo, blank=True, related_name='profile_photos'))  # Añadir campo 'photos' dinámicamente

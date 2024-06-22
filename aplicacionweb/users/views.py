@@ -48,7 +48,7 @@ def login_view(request):
 @login_required
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    return redirect('home')
 
 # Vista personalizada para el reseteo de contraseña
 class CustomPasswordResetView(PasswordResetView):
@@ -83,6 +83,7 @@ def profile(request):
             if photo_form.is_valid():
                 photo = photo_form.save(commit=False)
                 photo.user = request.user
+                photo.profile = request.user.profile  # Asignar el perfil del usuario a la foto
                 photo.save()
                 return redirect('profile')
         elif 'street_person_form_submit' in request.POST:
@@ -108,7 +109,7 @@ def profile(request):
 
                 return redirect('profile')
 
-    photos = Photo.objects.filter(user=request.user)
+    photos = Photo.objects.filter(user=request.user, visible=True)  # Filtrar solo fotos visibles
     street_person = StreetPerson.objects.filter(profile__user=request.user).last()
 
     return render(request, 'users/profile.html', {
@@ -118,16 +119,17 @@ def profile(request):
         'street_person': street_person
     })
 
-# Vista para eliminar una foto
+# Vista para eliminar una foto solo visualmente
 @login_required
 def delete_photo(request, photo_id):
     photo = get_object_or_404(Photo, id=photo_id, user=request.user)
     if request.method == 'POST':
-        photo.delete()
+        photo.visible = False  # Marcar la foto como no visible en lugar de eliminarla físicamente
+        photo.save()
         return redirect('profile')
     return render(request, 'users/profile.html', {
         'photo_form': PhotoUploadForm(),
         'street_person_form': StreetPersonForm(),
-        'photos': Photo.objects.filter(user=request.user),
+        'photos': Photo.objects.filter(user=request.user, visible=True),  # Filtrar solo fotos visibles
         'street_person': StreetPerson.objects.filter(profile__user=request.user).last()
     })
