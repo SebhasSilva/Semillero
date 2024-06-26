@@ -1,6 +1,8 @@
 from django.urls import path
 from .views import upload_photos, PhotoUploadView, PhotoListView, PhotoDeleteView
 
+app_name = 'photos'  # Asegúrate de tener un espacio de nombres para tus URLs
+
 urlpatterns = [
     path('upload/', PhotoUploadView.as_view(), name='photo_upload_api'),  # Para la API de subida
     path('list/', PhotoListView.as_view(), name='photo_list'),  # Para listar las fotos

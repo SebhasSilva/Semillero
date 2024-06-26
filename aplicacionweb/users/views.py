@@ -4,6 +4,8 @@ from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmVie
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
+from django.http import HttpResponse
 from .forms import CustomUserCreationForm, StreetPersonForm
 from photos.forms import PhotoUploadForm
 from photos.models import Photo
@@ -83,6 +85,7 @@ def profile(request):
             if photo_form.is_valid():
                 photo = photo_form.save(commit=False)
                 photo.user = request.user
+                photo.profile = request.user.profile  # Asignar el perfil del usuario
                 photo.save()
                 return redirect('profile')
         elif 'street_person_form_submit' in request.POST:
@@ -118,17 +121,15 @@ def profile(request):
         'street_person': street_person
     })
 
-# Vista para eliminar una foto solo visualmente
+# Vista para confirmar la eliminación de una foto solo visualmente
 @login_required
+@csrf_protect
 def delete_photo(request, photo_id):
-    photo = get_object_or_404(Photo, id=photo_id, user=request.user)
+    print(f"Request to delete photo with id: {photo_id}")
+    photo = get_object_or_404(Photo, id=photo_id)
     if request.method == 'POST':
         photo.visible = False  # Marcar la foto como no visible en lugar de eliminarla físicamente
         photo.save()
+        print(f"photo with id {photo_id} market as no visible")
         return redirect('profile')
-    return render(request, 'users/profile.html', {
-        'photo_form': PhotoUploadForm(),
-        'street_person_form': StreetPersonForm(),
-        'photos': Photo.objects.filter(user=request.user, visible=True),  # Filtrar solo fotos visibles
-        'street_person': StreetPerson.objects.filter(profile__user=request.user).last()
-    })
+    return HttpResponse("Photo not deleted")

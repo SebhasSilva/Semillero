@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
@@ -42,8 +42,14 @@ def upload_photos(request):
 
 class PhotoDeleteView(DeleteView):
     model = Photo
-    template_name = 'photos/photo_confirm_delete.html'
+    template_name = 'users/photo_confirm_delete.html'  # Asegúrate de que la ruta sea correcta
     success_url = reverse_lazy('profile')  # Redirige al perfil del usuario después de eliminar
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.visible = False  # Marca la foto como no visible
+        self.object.save()
+        return redirect(self.success_url)
 
     def get_queryset(self):
         """
