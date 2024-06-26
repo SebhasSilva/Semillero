@@ -1,3 +1,6 @@
+{% extends "users/base.html" %}
+
+{% block content %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -22,6 +25,11 @@
             font-size: 1.5rem;
             color: #343a40;
         }
+        .confirm-box img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
         .confirm-box button, .confirm-box a {
             padding: 10px 20px;
             border: none;
@@ -33,7 +41,7 @@
             color: white;
         }
         .confirm-box button {
-            background-color: #007bff;
+            background-color: #dc3545;
         }
         .confirm-box a {
             background-color: #6c757d;
@@ -47,6 +55,7 @@
     <div class="confirm-container">
         <div class="confirm-box">
             <h1>¿Estás seguro de que deseas eliminar esta foto?</h1>
+            <img src="{{ photo.image.url }}" alt="Foto de {{ photo.user.username }}">
             <form method="post">
                 {% csrf_token %}
                 <button type="submit">Sí, eliminar</button>
@@ -56,3 +65,4 @@
     </div>
 </body>
 </html>
+{% endblock %}

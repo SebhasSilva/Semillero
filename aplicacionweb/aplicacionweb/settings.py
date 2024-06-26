@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,19 +38,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
+    'django.contrib.sites',  # Ensure 'django.contrib.sites' is included
     'users',
     'rest_framework',
     'photos',
 ]
 
-# Indicar a Django que use nuestro modelo de usuario personalizado
+# Indicate Django to use our custom user model
 AUTH_USER_MODEL = 'users.CustomUser'
 
-# Configurar el sistema de autenticación y recuperación de contraseña
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Solo para desarrollo
+# Configure authentication and password recovery system
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Only for development
 
-# Configurar la ruta de media
+# Configure media files handling
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -57,7 +58,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',  # Ensure CSRF middleware is included
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -133,7 +134,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    Path(BASE_DIR).joinpath('static'),
+    BASE_DIR / 'static',  # Use Path object to define static files directory
 ]
 
 # Default primary key field type
@@ -141,4 +142,5 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Ensure the SITE_ID is correctly set for sites framework
 SITE_ID = 1
