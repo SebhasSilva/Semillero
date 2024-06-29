@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Photo List</h2>
+  <div>
+    {% for photo in photos %}
+      <div>
+        <img src="{{ photo.image.url }}" alt="Photo by {{ photo.user.username }}" style="max-width: 200px; max-height: 200px;">
+        <p>Uploaded at: {{ photo.uploaded_at }}</p>
+        <p>Visible: {{ photo.visible }}</p>
+        <a href="{% url 'photos:photo_delete' photo.id %}">Delete</a>
+
+        {% if photo.facial_landmarks %}
+          <h3>Facial Landmarks</h3>
+          <ul>
+            {% for point in photo.facial_landmarks.data|json_script:'landmarks' %}
+              <li>Point: ({{ point.0 }}, {{ point.1 }})</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>No facial landmarks detected.</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}
