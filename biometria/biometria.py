@@ -9,16 +9,18 @@ from datetime import datetime
 from pymongo import MongoClient
 
 # Configuración de la conexión a MongoDB
-client = MongoClient('tu_URI_de_conexion')
-db = client['nombre_de_tu_base_de_datos']
-collection = db['usuarios']
+client = MongoClient("mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.mongodb.net/ClusterSemillero?retryWrites=true&w=majority")  # Reemplaza con tu URI de conexión
+db = client['ClusterSemillero']  # Usa el nombre correcto de la base de datos
+users_collection = db['users']
+facial_data_collection = db['facial_data']
+photos_collection = db['photos']
 
 # Lista de opciones para la localidad
 opciones_localidad = [
-    "Usaquén", "Chapinero", "Santa Fe", "San Cristóbal", "Usme", 
-    "Tunjuelito", "Bosa", "Kennedy", "Fontibón", "Engativá", 
-    "Suba", "Barrios Unidos", "Teusaquillo", "Mártires", 
-    "Antonio Nariño", "Puente Aranda", "Candelaria", 
+    "Usaquén", "Chapinero", "Santa Fe", "San Cristóbal", "Usme",
+    "Tunjuelito", "Bosa", "Kennedy", "Fontibón", "Engativá",
+    "Suba", "Barrios Unidos", "Teusaquillo", "Mártires",
+    "Antonio Nariño", "Puente Aranda", "Candelaria",
     "Rafael Uribe Uribe", "Ciudad Bolívar", "Sumapaz"
 ]
 
@@ -62,7 +64,8 @@ def registrar_usuario():
         localidad = localidad_var.get()
         ubicacion_frecuente = ubicacion_frecuente_entry.get()
 
-        if nombre and apellido and ciudad and fecha_nacimiento and ano_situacion_calle and edad_inicio_drogas and localidad and ubicacion_frecuente:
+        if nombre and apellido and ciudad and fecha_nacimiento and ano_situacion_calle and edad_inicio_drogas:
+            user_data["_id"] = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
             user_data["Nombres"] = nombre
             user_data["Apellidos"] = apellido
             user_data["Fecha de Nacimiento"] = fecha_nacimiento
@@ -155,69 +158,82 @@ def registrar_usuario():
 
     return user_data
 
-# Función para registrar puntos faciales
-def registrar_puntos_faciales(img):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# Función para detectar y guardar puntos faciales
+def guardar_puntos_faciales(user_data):
+    cap = cv2.VideoCapture(0)
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-    faces = detector(gray)
-    landmarks_list = []
-
-    for face in faces:
-        landmarks = predictor(gray, face)
-        landmarks_points = []
-        for n in range(0, 68):
-            x = landmarks.part(n).x
-            y = landmarks.part(n).y
-            landmarks_points.append((x, y))
-        landmarks_list.append(landmarks_points)
-
-    return landmarks_list
-
-# Función para capturar imágenes
-def capturar_imagenes():
-    cam = cv2.VideoCapture(0)
-    cv2.namedWindow("Captura de Imagen")
-
+    predictor_path = "shape_predictor_68_face_landmarks.dat"
+    predictor = dlib.shape_predictor(predictor_path)
+    
     while True:
-        ret, frame = cam.read()
+        ret, frame = cap.read()
         if not ret:
-            print("Error al capturar la imagen")
-            break
-        cv2.imshow("Captura de Imagen", frame)
-        if cv2.waitKey(1) & 0xFF == ord(' '):
+            print("No se pudo capturar el frame de la cámara.")
             break
 
-    cam.release()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = detector(gray)
+
+        for face in faces:
+            landmarks = predictor(gray, face)
+            puntos_faciales = [(point.x, point.y) for point in landmarks.parts()]
+            
+            for idx, point in enumerate(puntos_faciales):
+                pos = (point[0], point[1])
+                cv2.circle(frame, pos, 2, (255, 0, 0), -1)
+                cv2.putText(frame, str(idx), pos, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+
+            cv2.imshow("Frame", frame)
+
+            k = cv2.waitKey(1)
+            if k == ord('s'):  # Cambié a 's' como indicaste
+                filename = f"{user_data['_id']}.jpg"
+                filepath = os.path.join("fotos", filename)
+                cv2.imwrite(filepath, frame)
+                print(f"Foto guardada en {filepath}")
+
+                photo_data = {
+                    "_id": user_data["_id"],  # Usamos el mismo ID para todas las colecciones
+                    "user_id": user_data["_id"],
+                    "filename": filename,
+                    "filepath": filepath,
+                    "timestamp": datetime.now().isoformat()
+                }
+                photos_collection.insert_one(photo_data)
+                print("Datos de la foto guardados en MongoDB")
+
+                facial_data = {
+                    "_id": user_data["_id"],  # Usamos el mismo ID para todas las colecciones
+                    "user_id": user_data["_id"],
+                    "facial_points": puntos_faciales,
+                    "timestamp": datetime.now().isoformat()
+                }
+                facial_data_collection.insert_one(facial_data)
+                print("Datos de los puntos faciales guardados en MongoDB")
+
+                cap.release()
+                cv2.destroyAllWindows()
+                return puntos_faciales, filename
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
     cv2.destroyAllWindows()
-    return frame
+    return None, None
 
-# Función principal del programa
+# Función principal
 def main():
     user_data = registrar_usuario()
-
     if user_data:
-        frame = capturar_imagenes()
-        if frame is not None:
-            puntos_faciales = registrar_puntos_faciales(frame)
-            if puntos_faciales:
-                # Asignar un nombre único a la imagen
-                nombre_imagen = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12)) + ".jpg"
-                path_imagen = os.path.join("images", nombre_imagen)
-                cv2.imwrite(path_imagen, frame)
-
-                # Guardar datos en MongoDB
-                user_data["Foto"] = path_imagen
-                user_data["Puntos Faciales"] = puntos_faciales
-                collection.insert_one(user_data)
-
-                messagebox.showinfo("Registro Exitoso", "Usuario registrado correctamente con la foto.")
-            else:
-                messagebox.showwarning("Error", "No se detectaron puntos faciales en la imagen.")
+        users_collection.insert_one(user_data)
+        puntos_faciales, filename = guardar_puntos_faciales(user_data)
+        if puntos_faciales and filename:
+            print("Datos guardados exitosamente.")
         else:
-            messagebox.showwarning("Error", "No se capturó ninguna imagen.")
+            print("No se pudieron guardar los puntos faciales o la foto.")
     else:
-        messagebox.showwarning("Registro Cancelado", "No se registró al usuario.")
+        print("No se pudieron registrar los datos del usuario.")
 
 if __name__ == "__main__":
     main()
