@@ -5,6 +5,8 @@ import random
 import string
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import ttk
+from tkcalendar import DateEntry
 from datetime import datetime
 from pymongo import MongoClient
 
@@ -51,9 +53,9 @@ def registrar_usuario():
     user_data = {}
 
     def guardar_datos():
-        nombre = nombre_entry.get()
-        apellido = apellido_entry.get()
-        ciudad = ciudad_entry.get()
+        nombre = nombre_entry.get().lower()
+        apellido = apellido_entry.get().lower()
+        ciudad = ciudad_entry.get().lower()
         fecha_nacimiento = fecha_nacimiento_entry.get()
         ano_situacion_calle = ano_situacion_calle_entry.get()
         edad_inicio_drogas = edad_inicio_drogas_entry.get()
@@ -62,7 +64,7 @@ def registrar_usuario():
         droga_frecuente_2 = droga_frecuente_2_var.get()
         droga_frecuente_3 = droga_frecuente_3_var.get()
         localidad = localidad_var.get()
-        ubicacion_frecuente = ubicacion_frecuente_entry.get()
+        ubicacion_frecuente = ubicacion_frecuente_entry.get().lower()
 
         if nombre and apellido and ciudad and fecha_nacimiento and ano_situacion_calle and edad_inicio_drogas:
             user_data["_id"] = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
@@ -113,7 +115,7 @@ def registrar_usuario():
     apellido_entry.grid(row=4, column=1, padx=10, pady=5)
 
     tk.Label(dialogo, text="Fecha de Nacimiento:").grid(row=5, column=0, padx=10, pady=5)
-    fecha_nacimiento_entry = tk.Entry(dialogo)
+    fecha_nacimiento_entry = DateEntry(dialogo, date_pattern='dd/mm/yyyy')
     fecha_nacimiento_entry.grid(row=5, column=1, padx=10, pady=5)
 
     tk.Label(dialogo, text="Ciudad de Nacimiento:").grid(row=6, column=0, padx=10, pady=5)
@@ -152,88 +154,109 @@ def registrar_usuario():
     droga_frecuente_3_dropdown = tk.OptionMenu(dialogo, droga_frecuente_3_var, *opciones_drogas)
     droga_frecuente_3_dropdown.grid(row=12, column=1, padx=10, pady=5)
 
-    tk.Button(dialogo, text="Guardar", command=guardar_datos).grid(row=13, column=0, columnspan=2, padx=10, pady=10)
+    tk.Button(dialogo, text="Guardar", command=guardar_datos).grid(row=13, column=0, columnspan=2, pady=10)
 
-    root.mainloop()
+    dialogo.mainloop()
 
     return user_data
 
-# Función para detectar y guardar puntos faciales
-def guardar_puntos_faciales(user_data):
-    cap = cv2.VideoCapture(0)
+# Función para tomar y guardar la foto
+def tomar_foto(usuario):
+    camara = cv2.VideoCapture(0)
     detector = dlib.get_frontal_face_detector()
-    predictor_path = "shape_predictor_68_face_landmarks.dat"
-    predictor = dlib.shape_predictor(predictor_path)
-    
+    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
     while True:
-        ret, frame = cap.read()
+        ret, frame = camara.read()
         if not ret:
-            print("No se pudo capturar el frame de la cámara.")
-            break
+            continue
 
+        # Convertir el frame a escala de grises
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = detector(gray)
 
-        for face in faces:
-            landmarks = predictor(gray, face)
-            puntos_faciales = [(point.x, point.y) for point in landmarks.parts()]
-            
-            for idx, point in enumerate(puntos_faciales):
-                pos = (point[0], point[1])
-                cv2.circle(frame, pos, 2, (255, 0, 0), -1)
-                cv2.putText(frame, str(idx), pos, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+        # Detectar rostros en la imagen
+        rectangulos = detector(gray, 1)
 
-            cv2.imshow("Frame", frame)
+        # Dibujar los puntos faciales en el rostro detectado
+        for rect in rectangulos:
+            forma = predictor(gray, rect)
+            for punto in forma.parts():
+                cv2.circle(frame, (punto.x, punto.y), 1, (0, 255, 0), -1)
 
-            k = cv2.waitKey(1)
-            if k == ord('s'):  # Cambié a 's' como indicaste
-                filename = f"{user_data['_id']}.jpg"
-                filepath = os.path.join("fotos", filename)
-                cv2.imwrite(filepath, frame)
-                print(f"Foto guardada en {filepath}")
+        cv2.imshow("Presiona 'Espacio' para tomar la foto, 'Enter' para salir", frame)
 
-                photo_data = {
-                    "_id": user_data["_id"],  # Usamos el mismo ID para todas las colecciones
-                    "user_id": user_data["_id"],
-                    "filename": filename,
-                    "filepath": filepath,
-                    "timestamp": datetime.now().isoformat()
-                }
-                photos_collection.insert_one(photo_data)
-                print("Datos de la foto guardados en MongoDB")
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord(' '):
+            # Guardar la imagen cuando se presiona la barra espaciadora
+            photo_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
+            photo_filename = f"photo_{usuario['_id']}_{photo_id}.jpg"
+            cv2.imwrite(photo_filename, frame)
 
-                facial_data = {
-                    "_id": user_data["_id"],  # Usamos el mismo ID para todas las colecciones
-                    "user_id": user_data["_id"],
-                    "facial_points": puntos_faciales,
-                    "timestamp": datetime.now().isoformat()
-                }
-                facial_data_collection.insert_one(facial_data)
-                print("Datos de los puntos faciales guardados en MongoDB")
+            # Guardar la foto en la base de datos de MongoDB
+            photo_document = {
+                "_id": photo_id,
+                "user_id": usuario["_id"],
+                "filename": photo_filename,
+                "uploaded_at": datetime.now()
+            }
+            photos_collection.insert_one(photo_document)
+            print("Foto tomada y guardada correctamente.")
 
-                cap.release()
-                cv2.destroyAllWindows()
-                return puntos_faciales, filename
+            # Guardar puntos faciales
+            detectar_guardar_puntos_faciales(photo_filename, usuario)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        elif key == 13:  # Código ASCII para la tecla Enter
             break
 
-    cap.release()
+    camara.release()
     cv2.destroyAllWindows()
-    return None, None
+
+    return photo_filename
+
+# Función para detectar y guardar puntos faciales
+def detectar_guardar_puntos_faciales(photo_filename, usuario):
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
+    imagen = cv2.imread(photo_filename)
+    imagen_rgb = cv2.cvtColor(imagen, cv2.COLOR_BGR2RGB)
+    rectangulos = detector(imagen_rgb, 1)
+
+    puntos_faciales = []
+    for rect in rectangulos:
+        forma = predictor(imagen_rgb, rect)
+        puntos_faciales = [(p.x, p.y) for p in forma.parts()]
+
+    if puntos_faciales:
+        facial_data_document = {
+            "_id": ''.join(random.choices(string.ascii_lowercase + string.digits, k=12)),
+            "user_id": usuario["_id"],
+            "photo_id": photo_filename,
+            "facial_points": puntos_faciales,
+            "created_at": datetime.now()
+        }
+        facial_data_collection.insert_one(facial_data_document)
+        print("Puntos faciales guardados correctamente.")
+
+    return puntos_faciales
 
 # Función principal
 def main():
-    user_data = registrar_usuario()
-    if user_data:
-        users_collection.insert_one(user_data)
-        puntos_faciales, filename = guardar_puntos_faciales(user_data)
-        if puntos_faciales and filename:
-            print("Datos guardados exitosamente.")
+    usuario = registrar_usuario()
+    if usuario:
+        users_collection.insert_one(usuario)
+        print("Usuario registrado exitosamente.")
+        photo_filename = tomar_foto(usuario)
+        if photo_filename:
+            puntos_faciales = detectar_guardar_puntos_faciales(photo_filename, usuario)
+            if puntos_faciales:
+                print("Puntos faciales guardados exitosamente.")
+            else:
+                print("No se detectaron puntos faciales.")
         else:
-            print("No se pudieron guardar los puntos faciales o la foto.")
+            print("No se tomó ninguna foto.")
     else:
-        print("No se pudieron registrar los datos del usuario.")
+        print("El registro del usuario fue cancelado.")
 
 if __name__ == "__main__":
     main()
