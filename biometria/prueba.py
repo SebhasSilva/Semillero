@@ -1,70 +1,88 @@
 import cv2
-import os
 import dlib
-import json
-import random
-import string
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import ttk
+from tkcalendar import DateEntry
 from datetime import datetime
+from pymongo import MongoClient
+import gridfs
+import uuid
 
-# Obtener la ruta al directorio actual
-dir_path = os.path.dirname(os.path.realpath(__file__))
-base_de_datos_file = os.path.join(dir_path, "base_de_datos.json")
+# Configuración de la conexión a MongoDB
+client = MongoClient("mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.mongodb.net/ClusterSemillero?retryWrites=true&w=majority")
+db = client['ClusterSemillero']
+users_collection = db['users']
+facial_data_collection = db['facial_data']
+fs = gridfs.GridFS(db)
 
-# Lista de opciones para la localidad
+# Lista de opciones para departamentos y ciudades
+departamentos_y_ciudades = {
+    "Amazonas": ["Leticia", "Puerto Nariño"],
+    "Antioquia": ["Medellín", "Envigado", "Itagüí", "Sabaneta", "Rionegro"],
+    "Arauca": ["Arauca", "Saravena"],
+    "Atlántico": ["Barranquilla", "Soledad", "Malambo", "Sabanalarga", "Galapa"],
+    "Bolívar": ["Cartagena", "Turbaco"],
+    "Boyacá": ["Tunja", "Duitama"],
+    "Caldas": ["Manizales", "Villamaría"],
+    "Caquetá": ["Florencia", "Morelia"],
+    "Casanare": ["Yopal", "Tauramena"],
+    "Cauca": ["Popayán", "Santander de Quilichao"],
+    "Cesar": ["Valledupar", "La Jagua de Ibirico"],
+    "Chocó": ["Quibdó", "Bajo Baudó"],
+    "Córdoba": ["Montería", "Lorica"],
+    "Cundinamarca": ["Bogotá", "Soacha", "Chía", "Zipaquirá", "Cajicá"],
+    "Guainía": ["Inírida", "San Felipe"],
+    "Guaviare": ["San José del Guaviare", "Calamar"],
+    "Huila": ["Neiva", "Pitalito"],
+    "La Guajira": ["Riohacha", "Maicao"],
+    "Magdalena": ["Santa Marta", "Ciénaga"],
+    "Meta": ["Villavicencio", "Acacías"],
+    "Nariño": ["Pasto", "Tumaco"],
+    "Norte de Santander": ["Cúcuta", "Villa de Rosario"],
+    "Putumayo": ["Mocoa", "Villagarzón"],
+    "Quindío": ["Armenia", "Salento"],
+    "Risaralda": ["Pereira", "Dosquebradas"],
+    "San Andrés y Providencia": ["San Andrés", "Providencia"],
+    "Santander": ["Bucaramanga", "Floridablanca", "Girón", "Piedecuesta", "San Gil"],
+    "Sucre": ["Sincelejo", "Corozal"],
+    "Tolima": ["Ibagué", "Espinal"],
+    "Valle del Cauca": ["Cali", "Buenaventura", "Tuluá", "Palmira", "Cartago"],
+    "Vaupés": ["Mitú", "Carurú"],
+    "Vichada": ["Puerto Carreño", "Cumaribo"]
+}
+
 opciones_localidad = [
-    "Usaquén", "Chapinero", "Santa Fe", "San Cristóbal", "Usme", 
-    "Tunjuelito", "Bosa", "Kennedy", "Fontibón", "Engativá", 
-    "Suba", "Barrios Unidos", "Teusaquillo", "Mártires", 
-    "Antonio Nariño", "Puente Aranda", "Candelaria", 
-    "Rafael Uribe Uribe", "Ciudad Bolívar", "Sumapaz"
+    "Santa Fe", "Mártires", "Datos de prueba"
 ]
 
-# Lista de opciones para las drogas
-opciones_drogas = ["N/A", "Marihuana", "Cocaína", "Heroína", "LSD", "Éxtasis", "Metanfetamina", "Bazuco"]
+opciones_drogas = ["N/A", "Alcohol", "Cigarrillo", "Marihuana", "Cocaína", "Heroína", "LSD", "Éxtasis", "Metanfetamina", "Bazuco"]
 
-# Función para cargar la base de datos
-def cargar_base_de_datos():
-    if os.path.exists(base_de_datos_file):
-        with open(base_de_datos_file, 'r') as file:
-            return json.load(file)
-    else:
-        return {}
+opciones_genero = ["Masculino", "Femenino"]
 
-# Función para guardar la base de datos
-def guardar_base_de_datos(base_de_datos):
-    with open(base_de_datos_file, 'w') as file:
-        json.dump(base_de_datos, file, indent=4)
-
-# Función para calcular la edad actual
 def calcular_edad(fecha_nacimiento):
     fecha_nac = datetime.strptime(fecha_nacimiento, "%d/%m/%Y")
     hoy = datetime.now()
     edad = hoy.year - fecha_nac.year - ((hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day))
     return edad
 
-# Función para calcular años en situación de calle
 def calcular_anos_situacion_calle(ano_situacion_calle):
     hoy = datetime.now()
     anos_situacion_calle = hoy.year - int(ano_situacion_calle)
     return anos_situacion_calle
 
-# Función para calcular años consumiendo drogas
 def calcular_anos_consumiendo_drogas(ano_inicio_drogas):
     hoy = datetime.now()
     anos_consumo_drogas = hoy.year - int(ano_inicio_drogas)
     return anos_consumo_drogas
 
-# Función para mostrar el formulario y registrar un usuario
-def registrar_usuario():
-    user_data = {}
-
+def registrar_usuario(common_id):
     def guardar_datos():
-        nombre = nombre_entry.get()
-        apellido = apellido_entry.get()
-        ciudad = ciudad_entry.get()
-        fecha_nacimiento = fecha_nacimiento_entry.get()
+        nombre = nombre_entry.get().strip().lower()
+        apellido = apellido_entry.get().strip().lower()
+        departamento = departamento_var.get()
+        ciudad = ciudad_var.get()
+        fecha_nacimiento = fecha_nacimiento_entry.get_date()
         ano_situacion_calle = ano_situacion_calle_entry.get()
         edad_inicio_drogas = edad_inicio_drogas_entry.get()
         primera_droga = primera_droga_var.get()
@@ -73,199 +91,226 @@ def registrar_usuario():
         droga_frecuente_3 = droga_frecuente_3_var.get()
         localidad = localidad_var.get()
         ubicacion_frecuente = ubicacion_frecuente_entry.get()
+        genero = genero_var.get()
+        no_es_usuario_de_calle = no_es_usuario_de_calle_var.get()
 
-        if nombre and apellido and ciudad and fecha_nacimiento and ano_situacion_calle and edad_inicio_drogas and localidad and ubicacion_frecuente:
-            user_data["Nombres"] = nombre
-            user_data["Apellidos"] = apellido
-            user_data["Fecha de Nacimiento"] = fecha_nacimiento
-            user_data["Edad"] = calcular_edad(fecha_nacimiento)
-            user_data["Ciudad_Nacimiento"] = ciudad
-            user_data["Hace cuanto tiempo esta en situación de calle"] = ano_situacion_calle
-            user_data["Años en situación de calle"] = calcular_anos_situacion_calle(ano_situacion_calle)
-            user_data["Edad de inicio de drogas"] = edad_inicio_drogas
-            user_data["Años consumiendo drogas"] = calcular_anos_consumiendo_drogas(str(datetime.now().year - int(edad_inicio_drogas)))
-            user_data["Primera droga consumida"] = primera_droga
-            user_data["Droga más frecuente"] = droga_frecuente_1
-            user_data["Droga medianamente frecuente"] = droga_frecuente_2
-            user_data["Droga menos frecuente"] = droga_frecuente_3
-            user_data["Localidad"] = localidad
-            user_data["Ubicación frecuente"] = ubicacion_frecuente
-            dialogo.destroy()
-            root.quit()
-        else:
-            messagebox.showwarning("Campos Incompletos", "Por favor complete todos los campos.")
-
-    root = tk.Tk()
-    root.withdraw()
-
-    dialogo = tk.Toplevel(root)
-    dialogo.title("Registro de Usuario")
-
-    tk.Label(dialogo, text="Ingrese sus datos personales").grid(row=0, column=0, columnspan=2, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Localidad:").grid(row=1, column=0, padx=10, pady=5)
-    localidad_var = tk.StringVar(dialogo)
-    localidad_var.set(opciones_localidad[0])
-    localidad_dropdown = tk.OptionMenu(dialogo, localidad_var, *opciones_localidad)
-    localidad_dropdown.grid(row=1, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Ubicación frecuente:").grid(row=2, column=0, padx=10, pady=5)
-    ubicacion_frecuente_entry = tk.Entry(dialogo)
-    ubicacion_frecuente_entry.grid(row=2, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Nombre:").grid(row=3, column=0, padx=10, pady=5)
-    nombre_entry = tk.Entry(dialogo)
-    nombre_entry.grid(row=3, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Apellido:").grid(row=4, column=0, padx=10, pady=5)
-    apellido_entry = tk.Entry(dialogo)
-    apellido_entry.grid(row=4, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Fecha de Nacimiento:").grid(row=5, column=0, padx=10, pady=5)
-    fecha_nacimiento_entry = tk.Entry(dialogo)
-    fecha_nacimiento_entry.grid(row=5, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Ciudad de Nacimiento:").grid(row=6, column=0, padx=10, pady=5)
-    ciudad_entry = tk.Entry(dialogo)
-    ciudad_entry.grid(row=6, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Hace cuanto tiempo esta en situación de calle (Año):").grid(row=7, column=0, padx=10, pady=5)
-    ano_situacion_calle_entry = tk.Entry(dialogo)
-    ano_situacion_calle_entry.grid(row=7, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="¿A qué edad comenzó a consumir drogas?:").grid(row=8, column=0, padx=10, pady=5)
-    edad_inicio_drogas_entry = tk.Entry(dialogo)
-    edad_inicio_drogas_entry.grid(row=8, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Primera droga consumida:").grid(row=9, column=0, padx=10, pady=5)
-    primera_droga_var = tk.StringVar(dialogo)
-    primera_droga_var.set(opciones_drogas[0])
-    primera_droga_dropdown = tk.OptionMenu(dialogo, primera_droga_var, *opciones_drogas)
-    primera_droga_dropdown.grid(row=9, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Droga más frecuente:").grid(row=10, column=0, padx=10, pady=5)
-    droga_frecuente_1_var = tk.StringVar(dialogo)
-    droga_frecuente_1_var.set(opciones_drogas[0])
-    droga_frecuente_1_dropdown = tk.OptionMenu(dialogo, droga_frecuente_1_var, *opciones_drogas)
-    droga_frecuente_1_dropdown.grid(row=10, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Droga medianamente frecuente:").grid(row=11, column=0, padx=10, pady=5)
-    droga_frecuente_2_var = tk.StringVar(dialogo)
-    droga_frecuente_2_var.set(opciones_drogas[0])
-    droga_frecuente_2_dropdown = tk.OptionMenu(dialogo, droga_frecuente_2_var, *opciones_drogas)
-    droga_frecuente_2_dropdown.grid(row=11, column=1, padx=10, pady=5)
-
-    tk.Label(dialogo, text="Droga menos frecuente:").grid(row=12, column=0, padx=10, pady=5)
-    droga_frecuente_3_var = tk.StringVar(dialogo)
-    droga_frecuente_3_var.set(opciones_drogas[0])
-    droga_frecuente_3_dropdown = tk.OptionMenu(dialogo, droga_frecuente_3_var, *opciones_drogas)
-    droga_frecuente_3_dropdown.grid(row=12, column=1, padx=10, pady=5)
-
-    tk.Button(dialogo, text="Guardar", command=guardar_datos).grid(row=13, column=0, columnspan=2, padx=10, pady=10)
-
-    root.mainloop()
-
-    return user_data if user_data else None
-
-# Función para capturar el rostro y sus puntos faciales
-def capturar_rostro():
-    # Activar la cámara
-    cap = cv2.VideoCapture(0)
-
-    # Cargar el detector de rostros de dlib
-    detector_rostros = dlib.get_frontal_face_detector()
-    predictor_puntos_faciales = dlib.shape_predictor(os.path.join(dir_path, "shape_predictor_68_face_landmarks.dat"))
-
-    # Crear la carpeta "ROSTROS" si no existe
-    if not os.path.exists('ROSTROS'):
-        os.makedirs('ROSTROS')
-
-    # Cargar o crear la base de datos
-    base_de_datos = cargar_base_de_datos()
-
-    # Capturar el rostro y sus puntos faciales
-    while True:
-        ret, frame = cap.read()
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        # Detectar rostros en la imagen
-        rostros = detector_rostros(gray)
-
-        # Procesar cada rostro encontrado
-        for i, rostro in enumerate(rostros):
-            # Obtener puntos faciales del rostro
-            puntos_faciales = predictor_puntos_faciales(gray, rostro)
-
-            # Generar un ID de usuario aleatorio
-            id_usuario = ''.join(random.choices(string.digits, k=6))
-
-            # Solicitar información al usuario
-            info_usuario = registrar_usuario()
-
-            if info_usuario is None:
-                print("El usuario canceló el registro o no completó los datos.")
-                # Si el usuario cancela, salimos del programa
-                return
-
-            print("Información del usuario obtenida:", info_usuario)
-
-            # Guardar la información del formulario en la base de datos
-            info_usuario["ID"] = id_usuario
-            info_usuario["Rostro"] = f'rostro_{id_usuario}.jpg'
-            base_de_datos[id_usuario] = info_usuario
-            guardar_base_de_datos(base_de_datos)
-
-            # Guardar información de los puntos faciales en un diccionario
-            rostro_data = {}
-            for j, punto in enumerate(puntos_faciales.parts()):
-                rostro_data[f'punto_{j+1}'] = (punto.x, punto.y)
-
-            # Guardar la información del rostro en un archivo JSON
-            with open(f'ROSTROS/rostro_{id_usuario}.json', 'w') as file:
-                json.dump(rostro_data, file, indent=4)
-
-            # Definir un margen para ampliar la región del rostro
-            margen = 40
-
-            # Asegúrate de no exceder los límites de la imagen
-            top = max(0, rostro.top() - margen)
-            bottom = min(frame.shape[0], rostro.bottom() + margen)
-            left = max(0, rostro.left() - margen)
-            right = min(frame.shape[1], rostro.right() + margen)
-
-            # Guardar la imagen del rostro con el margen adicional
-            rostro_img = frame[top:bottom, left:right]
-            cv2.imwrite(f'ROSTROS/rostro_{id_usuario}.jpg', rostro_img)
-
-            # Mostrar la imagen del rostro con puntos faciales
-            for punto in puntos_faciales.parts():
-                cv2.circle(rostro_img, (punto.x, punto.y), 2, (0, 255, 0), -1)
-
-            # Mostrar la información del registro
-            messagebox.showinfo("Información de Registro", 
-                                f"ID de Usuario: {id_usuario}\n"
-                                f"Nombres: {info_usuario['Nombres']}\n"
-                                f"Apellidos: {info_usuario['Apellidos']}\n"
-                                f"Edad: {info_usuario['Edad']}\n"
-                                f"Fecha de Nacimiento: {info_usuario['Fecha de Nacimiento']}\n"
-                                f"Ciudad de Nacimiento: {info_usuario['Ciudad_Nacimiento']}\n"
-                                f"Hace cuanto tiempo está en situación de calle: {info_usuario['Hace cuanto tiempo esta en situación de calle']}\n"
-                                f"Años en situación de calle: {info_usuario['Años en situación de calle']}\n"
-                                f"Edad de inicio de drogas: {info_usuario['Edad de inicio de drogas']}\n"
-                                f"Años consumiendo drogas: {info_usuario['Años consumiendo drogas']}\n"
-                                f"Ubicación frecuente: {info_usuario['Ubicación frecuente']}")
-
-            # Cerrar la cámara y la aplicación
-            cap.release()
-            cv2.destroyAllWindows()
+        if not all([nombre, apellido, departamento, ciudad, fecha_nacimiento, ano_situacion_calle, edad_inicio_drogas, primera_droga, droga_frecuente_1, droga_frecuente_2, droga_frecuente_3, localidad, ubicacion_frecuente, genero]):
+            messagebox.showwarning("Advertencia", "Todos los campos son obligatorios. Por favor, llene todos los campos.")
             return
 
-        # Mostrar la imagen en la ventana
-        cv2.imshow('Capturando Rostro', frame)
+        try:
+            ano_situacion_calle_val = int(ano_situacion_calle)
+            edad_inicio_drogas_val = int(edad_inicio_drogas)
+        except ValueError:
+            messagebox.showwarning("Advertencia", "Año de situación de calle y edad de inicio de drogas deben ser números enteros.")
+            return
 
-        # Salir del bucle si se presiona la tecla 'q'
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        hoy = datetime.now().date()
+        fecha_situacion_calle = datetime(ano_situacion_calle_val, 1, 1).date()
+        fecha_inicio_drogas = datetime(fecha_nacimiento.year + edad_inicio_drogas_val, 1, 1).date()
+
+        if not (fecha_nacimiento < fecha_situacion_calle):
+            messagebox.showwarning("Advertencia", "La fecha de nacimiento debe ser anterior al año de situación de calle.")
+            return
+
+        if not (fecha_nacimiento < fecha_inicio_drogas):
+            messagebox.showwarning("Advertencia", "La fecha de nacimiento debe ser anterior al año de inicio de drogas.")
+            return
+
+        user_data = {
+            "nombre": nombre,
+            "apellido": apellido,
+            "departamento": departamento,
+            "ciudad": ciudad,
+            "fecha_nacimiento": fecha_nacimiento.strftime("%d/%m/%Y"),
+            "edad": calcular_edad(fecha_nacimiento.strftime("%d/%m/%Y")),
+            "ano_situacion_calle": ano_situacion_calle,
+            "tiempo_situacion_calle": calcular_anos_situacion_calle(ano_situacion_calle),
+            "edad_inicio_drogas": edad_inicio_drogas,
+            "primera_droga": primera_droga,
+            "droga_frecuente_1": droga_frecuente_1,
+            "droga_frecuente_2": droga_frecuente_2,
+            "droga_frecuente_3": droga_frecuente_3,
+            "localidad": localidad,
+            "ubicacion_frecuente": ubicacion_frecuente,
+            "genero": genero,
+            "no_es_usuario_de_calle": no_es_usuario_de_calle,
+            "common_id": common_id
+        }
+
+        if common_id is None:
+            messagebox.showwarning("Advertencia", "ID del usuario no está definido.")
+            return
+
+        users_collection.update_one({"common_id": common_id}, {"$set": user_data}, upsert=True)
+        dialogo.destroy()
+        ventana.destroy()
+
+    def actualizar_ciudades(*args):
+        departamento = departamento_var.get()
+        ciudades = departamentos_y_ciudades.get(departamento, [])
+        ciudad_combobox['values'] = ciudades
+        if not ciudades:
+            ciudad_var.set('')
+
+    dialogo = tk.Toplevel()
+    dialogo.title("Registro de Usuario")
+
+    main_frame = ttk.Frame(dialogo, padding="10")
+    main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+    main_frame.columnconfigure(1, weight=1)
+
+    fields = [
+        ("Nombre", tk.StringVar(), None),
+        ("Apellido", tk.StringVar(), None),
+        ("Departamento", tk.StringVar(), actualizar_ciudades),
+        ("Ciudad", tk.StringVar(), None),
+        ("Fecha de Nacimiento", tk.StringVar(), None),
+        ("Año de Situación de Calle", tk.StringVar(), None),
+        ("Edad de Inicio de Consumo de Drogas", tk.StringVar(), None),
+        ("Primera Droga Consumida", tk.StringVar(), None),
+        ("Droga de Consumo Frecuente 1", tk.StringVar(), None),
+        ("Droga de Consumo Frecuente 2", tk.StringVar(), None),
+        ("Droga de Consumo Frecuente 3", tk.StringVar(), None),
+        ("Localidad", tk.StringVar(), None),
+        ("Ubicación Frecuente", tk.StringVar(), None),
+        ("Género", tk.StringVar(), None),
+        ("¿No es usuario de calle?", tk.BooleanVar(), None)
+    ]
+
+    for i, (label_text, var, callback) in enumerate(fields):
+        label = ttk.Label(main_frame, text=label_text)
+        label.grid(row=i, column=0, sticky=tk.W, pady=2)
+
+        if label_text == "Departamento":
+            departamento_var = var
+            departamento_combobox = ttk.Combobox(main_frame, textvariable=departamento_var, state="readonly")
+            departamento_combobox['values'] = list(departamentos_y_ciudades.keys())
+            if callback:
+                departamento_combobox.bind("<<ComboboxSelected>>", callback)
+            departamento_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "Ciudad":
+            ciudad_var = var
+            ciudad_combobox = ttk.Combobox(main_frame, textvariable=ciudad_var, state="readonly")
+            ciudad_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "Fecha de Nacimiento":
+            fecha_nacimiento_var = var
+            fecha_nacimiento_entry = DateEntry(main_frame, textvariable=fecha_nacimiento_var, date_pattern='dd/MM/yyyy', state="readonly")
+            fecha_nacimiento_entry.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "¿No es usuario de calle?":
+            no_es_usuario_de_calle_var = var
+            no_es_usuario_de_calle_checkbutton = ttk.Checkbutton(main_frame, variable=no_es_usuario_de_calle_var)
+            no_es_usuario_de_calle_checkbutton.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text in ["Primera Droga Consumida", "Droga de Consumo Frecuente 1", "Droga de Consumo Frecuente 2", "Droga de Consumo Frecuente 3"]:
+            if label_text == "Primera Droga Consumida":
+                primera_droga_var = var
+            elif label_text == "Droga de Consumo Frecuente 1":
+                droga_frecuente_1_var = var
+            elif label_text == "Droga de Consumo Frecuente 2":
+                droga_frecuente_2_var = var
+            elif label_text == "Droga de Consumo Frecuente 3":
+                droga_frecuente_3_var = var
+
+            droga_combobox = ttk.Combobox(main_frame, textvariable=var, state="readonly")
+            droga_combobox['values'] = opciones_drogas
+            droga_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "Localidad":
+            localidad_var = var
+            localidad_combobox = ttk.Combobox(main_frame, textvariable=localidad_var, state="readonly")
+            localidad_combobox['values'] = opciones_localidad
+            localidad_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "Género":
+            genero_var = var
+            genero_combobox = ttk.Combobox(main_frame, textvariable=genero_var, state="readonly")
+            genero_combobox['values'] = opciones_genero
+            genero_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        else:
+            entry = ttk.Entry(main_frame, textvariable=var)
+            entry.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+
+            if label_text == "Nombre":
+                nombre_entry = entry
+            elif label_text == "Apellido":
+                apellido_entry = entry
+            elif label_text == "Año de Situación de Calle":
+                ano_situacion_calle_entry = entry
+            elif label_text == "Edad de Inicio de Consumo de Drogas":
+                edad_inicio_drogas_entry = entry
+            elif label_text == "Ubicación Frecuente":
+                ubicacion_frecuente_entry = entry
+
+    guardar_button = ttk.Button(main_frame, text="Guardar", command=guardar_datos)
+    guardar_button.grid(row=len(fields), column=1, sticky=(tk.W, tk.E), pady=10)
+
+def tomar_foto_y_guardar_datos():
+    cap = cv2.VideoCapture(0)
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
+    if not cap.isOpened():
+        messagebox.showerror("Error", "No se pudo acceder a la cámara.")
+        return
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            messagebox.showerror("Error", "No se pudo leer el frame de la cámara.")
             break
 
-# Llamar a la función para capturar el rostro
-capturar_rostro()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = detector(gray)
+
+        for face in faces:
+            landmarks = predictor(gray, face)
+            for n in range(0, 68):
+                x = landmarks.part(n).x
+                y = landmarks.part(n).y
+                cv2.circle(frame, (x, y), 2, (255, 0, 0), -1)
+
+        cv2.imshow("Captura de foto - Presiona 's' para guardar", frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            # Generar un ID común
+            common_id = users_collection.estimated_document_count() + 1
+
+            # Convertir el frame a bytes
+            _, buffer = cv2.imencode('.jpg', frame)
+            img_bytes = buffer.tobytes()
+
+            # Guardar la foto en MongoDB usando GridFS
+            try:
+                photo_id = fs.put(img_bytes, filename=f"{common_id}_photo.jpg", common_id=common_id)
+                print(f"Foto guardada con ID: {photo_id}")
+            except Exception as e:
+                print(f"Error al guardar la foto: {e}")
+                messagebox.showerror("Error", f"No se pudo guardar la foto: {e}")
+
+            # Guardar los datos faciales en MongoDB
+            facial_data = [(p.x, p.y) for p in landmarks.parts()]
+            facial_data_document = {
+                "common_id": common_id,
+                "facial_points": facial_data
+            }
+            facial_data_collection.insert_one(facial_data_document)
+
+            registrar_usuario(common_id)
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+# Crear la ventana principal
+ventana = tk.Tk()
+ventana.title("Registro de Usuario")
+
+main_frame = ttk.Frame(ventana, padding="10")
+main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+main_frame.columnconfigure(0, weight=1)
+
+label = ttk.Label(main_frame, text="Presiona el botón para tomar una foto y registrar los datos del usuario")
+label.grid(row=0, column=0, pady=10)
+
+boton_tomar_foto = ttk.Button(main_frame, text="Tomar Foto y Registrar", command=tomar_foto_y_guardar_datos)
+boton_tomar_foto.grid(row=1, column=0, pady=10)
+
+ventana.mainloop()

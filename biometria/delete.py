@@ -20,7 +20,8 @@ client = MongoClient("mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.m
 db = client['ClusterSemillero']  # Usa el nombre correcto de la base de datos
 
 # Listado de colecciones a eliminar datos
-collections = ['facial_data', 'fs.chunks', 'fs.files', 'photos', 'users']
+collections = ['facial_data', 'fs.chunks', 'fs.files', #'photos', 
+               'users']
 
 # Eliminar todos los documentos de cada colección
 for collection_name in collections:

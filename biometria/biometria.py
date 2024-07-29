@@ -7,13 +7,13 @@ from tkcalendar import DateEntry
 from datetime import datetime
 from pymongo import MongoClient
 import gridfs
+import uuid
 
 # Configuración de la conexión a MongoDB
 client = MongoClient("mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.mongodb.net/ClusterSemillero?retryWrites=true&w=majority")
 db = client['ClusterSemillero']
 users_collection = db['users']
 facial_data_collection = db['facial_data']
-photos_collection = db['photos']
 fs = gridfs.GridFS(db)
 
 # Lista de opciones para departamentos y ciudades
@@ -52,7 +52,6 @@ departamentos_y_ciudades = {
     "Vichada": ["Puerto Carreño", "Cumaribo"]
 }
 
-# Opciones para localidades y drogas
 opciones_localidad = [
     "Santa Fe", "Mártires", "Datos de prueba"
 ]
@@ -61,26 +60,22 @@ opciones_drogas = ["N/A", "Alcohol", "Cigarrillo", "Marihuana", "Cocaína", "Her
 
 opciones_genero = ["Masculino", "Femenino"]
 
-# Función para calcular la edad actual
 def calcular_edad(fecha_nacimiento):
     fecha_nac = datetime.strptime(fecha_nacimiento, "%d/%m/%Y")
     hoy = datetime.now()
     edad = hoy.year - fecha_nac.year - ((hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day))
     return edad
 
-# Función para calcular años en situación de calle
 def calcular_anos_situacion_calle(ano_situacion_calle):
     hoy = datetime.now()
     anos_situacion_calle = hoy.year - int(ano_situacion_calle)
     return anos_situacion_calle
 
-# Función para calcular años consumiendo drogas
 def calcular_anos_consumiendo_drogas(ano_inicio_drogas):
     hoy = datetime.now()
     anos_consumo_drogas = hoy.year - int(ano_inicio_drogas)
     return anos_consumo_drogas
 
-# Función para registrar un usuario
 def registrar_usuario(common_id):
     def guardar_datos():
         nombre = nombre_entry.get().strip().lower()
@@ -99,12 +94,10 @@ def registrar_usuario(common_id):
         genero = genero_var.get()
         no_es_usuario_de_calle = no_es_usuario_de_calle_var.get()
 
-        # Validación de campos vacíos
         if not all([nombre, apellido, departamento, ciudad, fecha_nacimiento, ano_situacion_calle, edad_inicio_drogas, primera_droga, droga_frecuente_1, droga_frecuente_2, droga_frecuente_3, localidad, ubicacion_frecuente, genero]):
             messagebox.showwarning("Advertencia", "Todos los campos son obligatorios. Por favor, llene todos los campos.")
             return
-        
-        # Validación lógica de fechas
+
         try:
             ano_situacion_calle_val = int(ano_situacion_calle)
             edad_inicio_drogas_val = int(edad_inicio_drogas)
@@ -113,11 +106,9 @@ def registrar_usuario(common_id):
             return
 
         hoy = datetime.now().date()
-        
-        # Calcular las fechas límites basadas en los años de situación de calle y inicio de drogas
         fecha_situacion_calle = datetime(ano_situacion_calle_val, 1, 1).date()
         fecha_inicio_drogas = datetime(fecha_nacimiento.year + edad_inicio_drogas_val, 1, 1).date()
-        
+
         if not (fecha_nacimiento < fecha_situacion_calle):
             messagebox.showwarning("Advertencia", "La fecha de nacimiento debe ser anterior al año de situación de calle.")
             return
@@ -143,19 +134,17 @@ def registrar_usuario(common_id):
             "localidad": localidad,
             "ubicacion_frecuente": ubicacion_frecuente,
             "genero": genero,
-            "no_es_usuario_de_calle": no_es_usuario_de_calle
+            "no_es_usuario_de_calle": no_es_usuario_de_calle,
+            "common_id": common_id
         }
 
-        # Asegúrate de que common_id esté correctamente definido
         if common_id is None:
             messagebox.showwarning("Advertencia", "ID del usuario no está definido.")
             return
 
-        # Actualizar el registro en la base de datos
-        users_collection.update_one({"_id": common_id}, {"$set": user_data}, upsert=True)
-        messagebox.showinfo("Información", "Usuario registrado exitosamente.")
+        users_collection.update_one({"common_id": common_id}, {"$set": user_data}, upsert=True)
         dialogo.destroy()
-        ventana.quit()  # Cerrar la ventana principal
+        ventana.destroy()
 
     def actualizar_ciudades(*args):
         departamento = departamento_var.get()
@@ -163,143 +152,165 @@ def registrar_usuario(common_id):
         ciudad_combobox['values'] = ciudades
         if not ciudades:
             ciudad_var.set('')
-        else:
-            ciudad_var.set(ciudades[0])
 
     dialogo = tk.Toplevel()
     dialogo.title("Registro de Usuario")
 
-    # Crear un frame para contener el formulario
-    frame_formulario = ttk.Frame(dialogo, padding="10")
-    frame_formulario.grid(row=0, column=0, sticky=(tk.W, tk.E))
+    main_frame = ttk.Frame(dialogo, padding="10")
+    main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+    main_frame.columnconfigure(1, weight=1)
 
-    # Variables de control para los campos del formulario
-    nombre_var = tk.StringVar()
-    apellido_var = tk.StringVar()
-    departamento_var = tk.StringVar()
-    ciudad_var = tk.StringVar()
-    fecha_nacimiento_var = tk.StringVar()
-    ano_situacion_calle_var = tk.StringVar()
-    edad_inicio_drogas_var = tk.StringVar()
-    primera_droga_var = tk.StringVar()
-    droga_frecuente_1_var = tk.StringVar()
-    droga_frecuente_2_var = tk.StringVar()
-    droga_frecuente_3_var = tk.StringVar()
-    localidad_var = tk.StringVar()
-    ubicacion_frecuente_var = tk.StringVar()
-    genero_var = tk.StringVar()
-    no_es_usuario_de_calle_var = tk.StringVar()
+    fields = [
+        ("Nombre", tk.StringVar(), None),
+        ("Apellido", tk.StringVar(), None),
+        ("Departamento", tk.StringVar(), actualizar_ciudades),
+        ("Ciudad", tk.StringVar(), None),
+        ("Fecha de Nacimiento", tk.StringVar(), None),
+        ("Año de Situación de Calle", tk.StringVar(), None),
+        ("Edad de Inicio de Consumo de Drogas", tk.StringVar(), None),
+        ("Primera Droga Consumida", tk.StringVar(), None),
+        ("Droga de Consumo Frecuente 1", tk.StringVar(), None),
+        ("Droga de Consumo Frecuente 2", tk.StringVar(), None),
+        ("Droga de Consumo Frecuente 3", tk.StringVar(), None),
+        ("Localidad", tk.StringVar(), None),
+        ("Ubicación Frecuente", tk.StringVar(), None),
+        ("Género", tk.StringVar(), None),
+        ("¿No es usuario de calle?", tk.BooleanVar(), None)
+    ]
 
-    # Campos del formulario
-    ttk.Label(frame_formulario, text="Nombre:").grid(row=0, column=0, sticky=tk.W)
-    nombre_entry = ttk.Entry(frame_formulario, textvariable=nombre_var)
-    nombre_entry.grid(row=0, column=1, sticky=(tk.W, tk.E))
+    for i, (label_text, var, callback) in enumerate(fields):
+        label = ttk.Label(main_frame, text=label_text)
+        label.grid(row=i, column=0, sticky=tk.W, pady=2)
 
-    ttk.Label(frame_formulario, text="Apellido:").grid(row=1, column=0, sticky=tk.W)
-    apellido_entry = ttk.Entry(frame_formulario, textvariable=apellido_var)
-    apellido_entry.grid(row=1, column=1, sticky=(tk.W, tk.E))
+        if label_text == "Departamento":
+            departamento_var = var
+            departamento_combobox = ttk.Combobox(main_frame, textvariable=departamento_var, state="readonly")
+            departamento_combobox['values'] = list(departamentos_y_ciudades.keys())
+            if callback:
+                departamento_combobox.bind("<<ComboboxSelected>>", callback)
+            departamento_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "Ciudad":
+            ciudad_var = var
+            ciudad_combobox = ttk.Combobox(main_frame, textvariable=ciudad_var, state="readonly")
+            ciudad_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "Fecha de Nacimiento":
+            fecha_nacimiento_var = var
+            fecha_nacimiento_entry = DateEntry(main_frame, textvariable=fecha_nacimiento_var, date_pattern='dd/MM/yyyy', state="readonly")
+            fecha_nacimiento_entry.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "¿No es usuario de calle?":
+            no_es_usuario_de_calle_var = var
+            no_es_usuario_de_calle_checkbutton = ttk.Checkbutton(main_frame, variable=no_es_usuario_de_calle_var)
+            no_es_usuario_de_calle_checkbutton.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text in ["Primera Droga Consumida", "Droga de Consumo Frecuente 1", "Droga de Consumo Frecuente 2", "Droga de Consumo Frecuente 3"]:
+            if label_text == "Primera Droga Consumida":
+                primera_droga_var = var
+            elif label_text == "Droga de Consumo Frecuente 1":
+                droga_frecuente_1_var = var
+            elif label_text == "Droga de Consumo Frecuente 2":
+                droga_frecuente_2_var = var
+            elif label_text == "Droga de Consumo Frecuente 3":
+                droga_frecuente_3_var = var
 
-    ttk.Label(frame_formulario, text="Departamento:").grid(row=2, column=0, sticky=tk.W)
-    departamento_combobox = ttk.Combobox(frame_formulario, textvariable=departamento_var, values=list(departamentos_y_ciudades.keys()))
-    departamento_combobox.grid(row=2, column=1, sticky=(tk.W, tk.E))
-    departamento_combobox.bind("<<ComboboxSelected>>", actualizar_ciudades)
+            droga_combobox = ttk.Combobox(main_frame, textvariable=var, state="readonly")
+            droga_combobox['values'] = opciones_drogas
+            droga_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "Localidad":
+            localidad_var = var
+            localidad_combobox = ttk.Combobox(main_frame, textvariable=localidad_var, state="readonly")
+            localidad_combobox['values'] = opciones_localidad
+            localidad_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        elif label_text == "Género":
+            genero_var = var
+            genero_combobox = ttk.Combobox(main_frame, textvariable=genero_var, state="readonly")
+            genero_combobox['values'] = opciones_genero
+            genero_combobox.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
+        else:
+            entry = ttk.Entry(main_frame, textvariable=var)
+            entry.grid(row=i, column=1, sticky=(tk.W, tk.E), pady=2)
 
-    ttk.Label(frame_formulario, text="Ciudad:").grid(row=3, column=0, sticky=tk.W)
-    ciudad_combobox = ttk.Combobox(frame_formulario, textvariable=ciudad_var)
-    ciudad_combobox.grid(row=3, column=1, sticky=(tk.W, tk.E))
+            if label_text == "Nombre":
+                nombre_entry = entry
+            elif label_text == "Apellido":
+                apellido_entry = entry
+            elif label_text == "Año de Situación de Calle":
+                ano_situacion_calle_entry = entry
+            elif label_text == "Edad de Inicio de Consumo de Drogas":
+                edad_inicio_drogas_entry = entry
+            elif label_text == "Ubicación Frecuente":
+                ubicacion_frecuente_entry = entry
 
-    ttk.Label(frame_formulario, text="Fecha de Nacimiento:").grid(row=4, column=0, sticky=tk.W)
-    fecha_nacimiento_entry = DateEntry(frame_formulario, textvariable=fecha_nacimiento_var, date_pattern='dd/MM/yyyy')
-    fecha_nacimiento_entry.grid(row=4, column=1, sticky=(tk.W, tk.E))
+    guardar_button = ttk.Button(main_frame, text="Guardar", command=guardar_datos)
+    guardar_button.grid(row=len(fields), column=1, sticky=(tk.W, tk.E), pady=10)
 
-    ttk.Label(frame_formulario, text="Año Situación de Calle:").grid(row=5, column=0, sticky=tk.W)
-    ano_situacion_calle_entry = ttk.Entry(frame_formulario, textvariable=ano_situacion_calle_var)
-    ano_situacion_calle_entry.grid(row=5, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Label(frame_formulario, text="Edad Inicio de Drogas:").grid(row=6, column=0, sticky=tk.W)
-    edad_inicio_drogas_entry = ttk.Entry(frame_formulario, textvariable=edad_inicio_drogas_var)
-    edad_inicio_drogas_entry.grid(row=6, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Label(frame_formulario, text="Primera Droga Consumida:").grid(row=7, column=0, sticky=tk.W)
-    primera_droga_combobox = ttk.Combobox(frame_formulario, textvariable=primera_droga_var, values=opciones_drogas)
-    primera_droga_combobox.grid(row=7, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Label(frame_formulario, text="Droga Frecuente 1:").grid(row=8, column=0, sticky=tk.W)
-    droga_frecuente_1_combobox = ttk.Combobox(frame_formulario, textvariable=droga_frecuente_1_var, values=opciones_drogas)
-    droga_frecuente_1_combobox.grid(row=8, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Label(frame_formulario, text="Droga Frecuente 2:").grid(row=9, column=0, sticky=tk.W)
-    droga_frecuente_2_combobox = ttk.Combobox(frame_formulario, textvariable=droga_frecuente_2_var, values=opciones_drogas)
-    droga_frecuente_2_combobox.grid(row=9, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Label(frame_formulario, text="Droga Frecuente 3:").grid(row=10, column=0, sticky=tk.W)
-    droga_frecuente_3_combobox = ttk.Combobox(frame_formulario, textvariable=droga_frecuente_3_var, values=opciones_drogas)
-    droga_frecuente_3_combobox.grid(row=10, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Label(frame_formulario, text="Localidad:").grid(row=11, column=0, sticky=tk.W)
-    localidad_combobox = ttk.Combobox(frame_formulario, textvariable=localidad_var, values=opciones_localidad)
-    localidad_combobox.grid(row=11, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Label(frame_formulario, text="Ubicación Frecuente:").grid(row=12, column=0, sticky=tk.W)
-    ubicacion_frecuente_entry = ttk.Entry(frame_formulario, textvariable=ubicacion_frecuente_var)
-    ubicacion_frecuente_entry.grid(row=12, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Label(frame_formulario, text="Género:").grid(row=13, column=0, sticky=tk.W)
-    genero_combobox = ttk.Combobox(frame_formulario, textvariable=genero_var, values=opciones_genero)
-    genero_combobox.grid(row=13, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Label(frame_formulario, text="No es Usuario de Calle:").grid(row=14, column=0, sticky=tk.W)
-    no_es_usuario_de_calle_checkbox = ttk.Checkbutton(frame_formulario, variable=no_es_usuario_de_calle_var, onvalue="Sí", offvalue="No")
-    no_es_usuario_de_calle_checkbox.grid(row=14, column=1, sticky=(tk.W, tk.E))
-
-    ttk.Button(frame_formulario, text="Guardar", command=guardar_datos).grid(row=15, column=0, columnspan=2)
-
-    dialogo.transient(ventana)  # Hacer que el cuadro de diálogo sea modal
-    dialogo.grab_set()
-    ventana.wait_window(dialogo)
-
-# Función para capturar foto y registrar usuario
-def capturar_foto_y_registrar_usuario():
+def tomar_foto_y_guardar_datos():
     cap = cv2.VideoCapture(0)
-    detector_rostros = dlib.get_frontal_face_detector()
-    
-    common_id = None
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
+    if not cap.isOpened():
+        messagebox.showerror("Error", "No se pudo acceder a la cámara.")
+        return
 
     while True:
         ret, frame = cap.read()
         if not ret:
-            messagebox.showerror("Error", "No se pudo acceder a la cámara.")
+            messagebox.showerror("Error", "No se pudo leer el frame de la cámara.")
             break
 
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        rostros = detector_rostros(frame_rgb)
-        
-        for rostro in rostros:
-            x, y, w, h = (rostro.left(), rostro.top(), rostro.width(), rostro.height())
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        
-        cv2.imshow("Captura de Rostros - Presiona 'c' para capturar", frame)
-        
-        key = cv2.waitKey(1)
-        if key == ord('c') and rostros:
-            rostro_capturado = frame[y:y + h, x:x + w]
-            _, img_encoded = cv2.imencode('.jpg', rostro_capturado)
-            common_id = fs.put(img_encoded.tobytes(), filename='rostro.jpg')
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = detector(gray)
+
+        for face in faces:
+            landmarks = predictor(gray, face)
+            for n in range(0, 68):
+                x = landmarks.part(n).x
+                y = landmarks.part(n).y
+                cv2.circle(frame, (x, y), 2, (255, 0, 0), -1)
+
+        cv2.imshow("Captura de foto - Presiona 's' para guardar", frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            # Generar un ID común
+            common_id = users_collection.estimated_document_count() + 1
+
+            # Convertir el frame a bytes
+            _, buffer = cv2.imencode('.jpg', frame)
+            img_bytes = buffer.tobytes()
+
+            # Guardar la foto en MongoDB usando GridFS
+            try:
+                photo_id = fs.put(img_bytes, filename=f"{common_id}_photo.jpg", common_id=common_id)
+                print(f"Foto guardada con ID: {photo_id}")
+            except Exception as e:
+                print(f"Error al guardar la foto: {e}")
+                messagebox.showerror("Error", f"No se pudo guardar la foto: {e}")
+
+            # Guardar los datos faciales en MongoDB
+            facial_data = [(p.x, p.y) for p in landmarks.parts()]
+            facial_data_document = {
+                "common_id": common_id,
+                "facial_points": facial_data
+            }
+            facial_data_collection.insert_one(facial_data_document)
+
+            registrar_usuario(common_id)
             break
-    
+
     cap.release()
     cv2.destroyAllWindows()
 
-    if common_id is not None:
-        registrar_usuario(common_id)
-
 # Crear la ventana principal
 ventana = tk.Tk()
-ventana.title("Registro de Usuarios")
-ventana.geometry("400x200")
+ventana.title("Registro de Usuario")
 
-# Botón para capturar foto y registrar usuario
-boton_registrar = ttk.Button(ventana, text="Capturar Foto y Registrar Usuario", command=capturar_foto_y_registrar_usuario)
-boton_registrar.pack(expand=True)
+main_frame = ttk.Frame(ventana, padding="10")
+main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+main_frame.columnconfigure(0, weight=1)
+
+label = ttk.Label(main_frame, text="Presiona el botón para tomar una foto y registrar los datos del usuario")
+label.grid(row=0, column=0, pady=10)
+
+boton_tomar_foto = ttk.Button(main_frame, text="Tomar Foto y Registrar", command=tomar_foto_y_guardar_datos)
+boton_tomar_foto.grid(row=1, column=0, pady=10)
 
 ventana.mainloop()
