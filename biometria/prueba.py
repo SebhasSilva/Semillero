@@ -313,8 +313,6 @@ import uuid
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# [Todo el código anterior se mantiene igual]
-
 def mostrar_estadisticas():
     # Conectar a la base de datos
     client = MongoClient("mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.mongodb.net/ClusterSemillero?retryWrites=true&w=majority")
