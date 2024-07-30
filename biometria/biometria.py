@@ -8,6 +8,8 @@ from datetime import datetime
 from pymongo import MongoClient
 import gridfs
 import uuid
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Configuración de la conexión a MongoDB
 client = MongoClient("mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.mongodb.net/ClusterSemillero?retryWrites=true&w=majority")
@@ -298,8 +300,210 @@ def tomar_foto_y_guardar_datos():
 
     cap.release()
     cv2.destroyAllWindows()
+import cv2
+import dlib
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
+from tkcalendar import DateEntry
+from datetime import datetime
+from pymongo import MongoClient
+import gridfs
+import uuid
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Crear la ventana principal
+def mostrar_estadisticas():
+    # Conectar a la base de datos
+    client = MongoClient("mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.mongodb.net/ClusterSemillero?retryWrites=true&w=majority")
+    db = client['ClusterSemillero']
+    users_collection = db['users']
+
+    # Obtener todos los usuarios
+    usuarios = list(users_collection.find())
+
+    # Crear una nueva ventana para las estadísticas
+    ventana_estadisticas = tk.Toplevel()
+    ventana_estadisticas.title("Estadísticas de Usuarios")
+    ventana_estadisticas.geometry("1000x600")
+
+    #Frame para filtros
+    frame_filtros = ttk.Frame(ventana_estadisticas, padding="10")
+    frame_filtros.pack(fill=tk.X)
+
+    # Filtros
+    ttk.Label(frame_filtros, text="Filtrar por:").grid(row=0, column=0, padx=5, pady=5)
+
+    # Género
+    genero_var = tk.StringVar(value="Todos")
+    ttk.Label(frame_filtros, text="Género:").grid(row=0, column=1, padx=5, pady=5)
+    ttk.Combobox(frame_filtros, textvariable=genero_var, values=["Todos", "Masculino", "Femenino"]).grid(row=0, column=2, padx=5, pady=5)
+
+    # Rango de edad
+    edad_min_var = tk.StringVar(value="0")
+    edad_max_var = tk.StringVar(value="100")
+    ttk.Label(frame_filtros, text="Edad:").grid(row=0, column=3, padx=5, pady=5)
+    ttk.Entry(frame_filtros, textvariable=edad_min_var, width=5).grid(row=0, column=4, padx=5, pady=5)
+    ttk.Label(frame_filtros, text="-").grid(row=0, column=5)
+    ttk.Entry(frame_filtros, textvariable=edad_max_var, width=5).grid(row=0, column=6, padx=5, pady=5)
+
+    # Usuario de calle
+    usuario_calle_var = tk.StringVar(value="Todos")
+    ttk.Label(frame_filtros, text="Usuario de calle:").grid(row=0, column=7, padx=5, pady=5)
+    ttk.Combobox(frame_filtros, textvariable=usuario_calle_var, values=["Todos", "Sí", "No"]).grid(row=0, column=8, padx=5, pady=5)
+
+    # Notebook para las gráficas
+    notebook = ttk.Notebook(ventana_estadisticas)
+    notebook.pack(fill=tk.BOTH, expand=True)
+
+    
+
+    def actualizar_estadisticas():
+        # Limpiar notebook
+        for tab in notebook.winfo_children():
+            tab.destroy()
+
+        # Obtener usuarios filtrados
+        filtro = {}
+        if genero_var.get() != "Todos":
+            filtro["genero"] = genero_var.get()
+        if edad_min_var.get() and edad_max_var.get():
+            filtro["edad"] = {"$gte": int(edad_min_var.get()), "$lte": int(edad_max_var.get())}
+        if usuario_calle_var.get() != "Todos":
+            filtro["no_es_usuario_de_calle"] = usuario_calle_var.get() == "No"
+
+        usuarios = list(users_collection.find(filtro))
+
+        # Función para crear gráfico de barras
+        def crear_grafico_barras(datos, titulo, etiqueta_x, etiqueta_y):
+            fig, ax = plt.subplots(figsize=(8, 4))
+            ax.bar(datos.keys(), datos.values())
+            ax.set_title(titulo)
+            ax.set_xlabel(etiqueta_x)
+            ax.set_ylabel(etiqueta_y)
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+            return fig
+
+        # Estadísticas por género
+        generos = {}
+        for usuario in usuarios:
+            genero = usuario.get('genero', 'No especificado')
+            generos[genero] = generos.get(genero, 0) + 1
+
+        tab_genero = ttk.Frame(notebook)
+        notebook.add(tab_genero, text='Género')
+        fig_genero = crear_grafico_barras(generos, 'Distribución por Género', 'Género', 'Cantidad')
+        canvas_genero = FigureCanvasTkAgg(fig_genero, master=tab_genero)
+        canvas_genero.draw()
+        canvas_genero.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        # Estadísticas por edad
+        edades = {}
+        for usuario in usuarios:
+            edad = usuario.get('edad', 'No especificado')
+            if isinstance(edad, int):
+                rango = f"{edad // 10 * 10}-{edad // 10 * 10 + 9}"
+                edades[rango] = edades.get(rango, 0) + 1
+
+        tab_edad = ttk.Frame(notebook)
+        notebook.add(tab_edad, text='Edad')
+        fig_edad = crear_grafico_barras(edades, 'Distribución por Edad', 'Rango de Edad', 'Cantidad')
+        canvas_edad = FigureCanvasTkAgg(fig_edad, master=tab_edad)
+        canvas_edad.draw()
+        canvas_edad.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        # Estadísticas por primera droga consumida
+        drogas = {}
+        for usuario in usuarios:
+            droga = usuario.get('primera_droga', 'No especificado')
+            drogas[droga] = drogas.get(droga, 0) + 1
+
+        tab_droga = ttk.Frame(notebook)
+        notebook.add(tab_droga, text='Primera Droga')
+        fig_droga = crear_grafico_barras(drogas, 'Primera Droga Consumida', 'Droga', 'Cantidad')
+        canvas_droga = FigureCanvasTkAgg(fig_droga, master=tab_droga)
+        canvas_droga.draw()
+        canvas_droga.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        # Estadísticas por usuario de calle
+        usuario_calle = {"Sí": 0, "No": 0}
+        for usuario in usuarios:
+            if usuario.get('no_es_usuario_de_calle', False):
+                usuario_calle["No"] += 1
+            else:
+                usuario_calle["Sí"] += 1
+
+        tab_usuario_calle = ttk.Frame(notebook)
+        notebook.add(tab_usuario_calle, text='Usuario de Calle')
+        fig_usuario_calle = crear_grafico_barras(usuario_calle, 'Distribución por Usuario de Calle', 'Es Usuario de Calle', 'Cantidad')
+        canvas_usuario_calle = FigureCanvasTkAgg(fig_usuario_calle, master=tab_usuario_calle)
+        canvas_usuario_calle.draw()
+        canvas_usuario_calle.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Botón para actualizar estadísticas
+    ttk.Button(frame_filtros, text="Actualizar", command=actualizar_estadisticas).grid(row=0, column=9, padx=5, pady=5)
+
+    # Mostrar estadísticas iniciales
+    actualizar_estadisticas()
+
+    # Crear un notebook (pestañas) para organizar las estadísticas
+    notebook = ttk.Notebook(ventana_estadisticas)
+    notebook.pack(fill=tk.BOTH, expand=True)
+
+    # Función para crear gráfico de barras
+    def crear_grafico_barras(datos, titulo, etiqueta_x, etiqueta_y):
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.bar(datos.keys(), datos.values())
+        ax.set_title(titulo)
+        ax.set_xlabel(etiqueta_x)
+        ax.set_ylabel(etiqueta_y)
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
+        return fig
+
+    # Estadísticas por género
+    generos = {}
+    for usuario in usuarios:
+        genero = usuario.get('genero', 'No especificado')
+        generos[genero] = generos.get(genero, 0) + 1
+
+    tab_genero = ttk.Frame(notebook)
+    notebook.add(tab_genero, text='Género')
+    fig_genero = crear_grafico_barras(generos, 'Distribución por Género', 'Género', 'Cantidad')
+    canvas_genero = FigureCanvasTkAgg(fig_genero, master=tab_genero)
+    canvas_genero.draw()
+    canvas_genero.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Estadísticas por edad
+    edades = {}
+    for usuario in usuarios:
+        edad = usuario.get('edad', 'No especificado')
+        if isinstance(edad, int):
+            rango = f"{edad // 10 * 10}-{edad // 10 * 10 + 9}"
+            edades[rango] = edades.get(rango, 0) + 1
+
+    tab_edad = ttk.Frame(notebook)
+    notebook.add(tab_edad, text='Edad')
+    fig_edad = crear_grafico_barras(edades, 'Distribución por Edad', 'Rango de Edad', 'Cantidad')
+    canvas_edad = FigureCanvasTkAgg(fig_edad, master=tab_edad)
+    canvas_edad.draw()
+    canvas_edad.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    # Estadísticas por primera droga consumida
+    drogas = {}
+    for usuario in usuarios:
+        droga = usuario.get('primera_droga', 'No especificado')
+        drogas[droga] = drogas.get(droga, 0) + 1
+
+    tab_droga = ttk.Frame(notebook)
+    notebook.add(tab_droga, text='Primera Droga')
+    fig_droga = crear_grafico_barras(drogas, 'Primera Droga Consumida', 'Droga', 'Cantidad')
+    canvas_droga = FigureCanvasTkAgg(fig_droga, master=tab_droga)
+    canvas_droga.draw()
+    canvas_droga.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+# Modificar la ventana principal para incluir el botón de estadísticas
 ventana = tk.Tk()
 ventana.title("Registro de Usuario")
 
@@ -312,5 +516,8 @@ label.grid(row=0, column=0, pady=10)
 
 boton_tomar_foto = ttk.Button(main_frame, text="Tomar Foto y Registrar", command=tomar_foto_y_guardar_datos)
 boton_tomar_foto.grid(row=1, column=0, pady=10)
+
+boton_estadisticas = ttk.Button(main_frame, text="Ver Estadísticas", command=mostrar_estadisticas)
+boton_estadisticas.grid(row=2, column=0, pady=10)
 
 ventana.mainloop()
