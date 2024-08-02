@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'photos',
+    'djongo',
 ]
 
 # Indicate Django to use our custom user model
