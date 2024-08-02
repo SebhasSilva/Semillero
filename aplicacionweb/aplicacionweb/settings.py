@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'photos',
-    'djongo',
 ]
 
 # Indicate Django to use our custom user model
@@ -93,15 +92,6 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    },
-    'mongodb': {
-        'ENGINE': 'djongo',
-        'NAME': 'ClusterSemillero',
-        'CLIENT': {
-            'host': 'mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.mongodb.net/ClusterSemillero?retryWrites=true&w=majority',
-            'username': 'sebhassilva',
-            'password': '12345',
-        }
     }
 }
 
