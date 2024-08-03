@@ -300,18 +300,6 @@ def tomar_foto_y_guardar_datos():
 
     cap.release()
     cv2.destroyAllWindows()
-import cv2
-import dlib
-import tkinter as tk
-from tkinter import messagebox
-from tkinter import ttk
-from tkcalendar import DateEntry
-from datetime import datetime
-from pymongo import MongoClient
-import gridfs
-import uuid
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 def mostrar_estadisticas():
     # Conectar a la base de datos
