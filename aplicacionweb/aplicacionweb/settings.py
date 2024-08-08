@@ -42,8 +42,8 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'photos',
+    'django_q',
 ]
-
 # Indicate Django to use our custom user model
 AUTH_USER_MODEL = 'users.CustomUser'
 
@@ -92,12 +92,35 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
+    'mongodb': {
+        'ENGINE': 'djongo',
+        'NAME': 'clustersemillero',
+        'ENFORCE_SCHEMA': False,
+        'CLIENT': {
+            'host': 'clustersemillero.xyem2ot.mongodb.net',
+            'port': 27017,
+            'username': 'sebhassilva',
+            'password': '12345',
+            'authSource': 'admin',
+        },
+    },
 }
 
+# Configura la URI de MongoDB para el uso directo con PyMongo
+MONGO_URI = 'mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.mongodb.net/ClusterSemillero?retryWrites=true&w=majority'
+MONGO_DB_NAME = 'clustersemillero'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
+
+Q_CLUSTER = {
+    'name': 'DjangORM',
+    'workers': 4,
+    'recycle': 500,
+    'timeout': 60,
+    'django_orm': 'default',
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {

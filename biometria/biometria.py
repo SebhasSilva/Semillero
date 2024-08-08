@@ -163,10 +163,10 @@ def registrar_usuario(common_id):
     main_frame.columnconfigure(1, weight=1)
 
     fields = [
-        ("Nombre", tk.StringVar(), None),
-        ("Apellido", tk.StringVar(), None),
-        ("Departamento", tk.StringVar(), actualizar_ciudades),
-        ("Ciudad", tk.StringVar(), None),
+        ("Nombres", tk.StringVar(), None),
+        ("Apellidos", tk.StringVar(), None),
+        ("Departamento de nacimiento", tk.StringVar(), actualizar_ciudades),
+        ("Ciudad de nacimiento", tk.StringVar(), None),
         ("Fecha de Nacimiento", tk.StringVar(), None),
         ("Año de Situación de Calle", tk.StringVar(), None),
         ("Edad de Inicio de Consumo de Drogas", tk.StringVar(), None),
