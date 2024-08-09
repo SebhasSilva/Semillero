@@ -163,10 +163,10 @@ def registrar_usuario(common_id):
     main_frame.columnconfigure(1, weight=1)
 
     fields = [
-        ("Nombres", tk.StringVar(), None),
-        ("Apellidos", tk.StringVar(), None),
-        ("Departamento de nacimiento", tk.StringVar(), actualizar_ciudades),
-        ("Ciudad de nacimiento", tk.StringVar(), None),
+        ("Nombre", tk.StringVar(), None),
+        ("Apellido", tk.StringVar(), None),
+        ("Departamento", tk.StringVar(), actualizar_ciudades),
+        ("Ciudad", tk.StringVar(), None),
         ("Fecha de Nacimiento", tk.StringVar(), None),
         ("Año de Situación de Calle", tk.StringVar(), None),
         ("Edad de Inicio de Consumo de Drogas", tk.StringVar(), None),
@@ -300,6 +300,18 @@ def tomar_foto_y_guardar_datos():
 
     cap.release()
     cv2.destroyAllWindows()
+import cv2
+import dlib
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
+from tkcalendar import DateEntry
+from datetime import datetime
+from pymongo import MongoClient
+import gridfs
+import uuid
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 def mostrar_estadisticas():
     # Conectar a la base de datos
