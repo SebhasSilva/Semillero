@@ -8,6 +8,32 @@ from datetime import datetime
 from pymongo import MongoClient
 import gridfs
 import uuid
+import sqlite3
+import threading
+import time
+import math
+import os
+import django
+
+def normalizar_texto(texto):
+    return texto.lower().strip()
+
+def normalizar_fecha(fecha_str):
+    formatos = ["%d/%m/%Y", "%b. %d, %Y", "%Y-%m-%d"]
+    for formato in formatos:
+        try:
+            return datetime.strptime(fecha_str, formato).date()
+        except ValueError:
+            continue
+    return None
+
+# Configurar Django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aplicacionweb.settings")
+django.setup()
+
+# Importar modelos de Django
+from users.models import StreetPerson
+from photos.models import Photo
 
 # Configuración de la conexión a MongoDB
 client = MongoClient("mongodb+srv://sebhassilva:12345@clustersemillero.xyem2ot.mongodb.net/ClusterSemillero?retryWrites=true&w=majority")
@@ -299,18 +325,174 @@ def tomar_foto_y_guardar_datos():
     cap.release()
     cv2.destroyAllWindows()
 
-# Crear la ventana principal
-ventana = tk.Tk()
-ventana.title("Registro de Usuario")
+# NUEVAS FUNCIONES PARA EL MATCHING
 
-main_frame = ttk.Frame(ventana, padding="10")
-main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-main_frame.columnconfigure(0, weight=1)
+# Función para calcular la similitud facial
+def calcular_similitud_facial(puntos1, puntos2):
+    if len(puntos1) != len(puntos2):
+        return 0
+    
+    distancias = [math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2) for p1, p2 in zip(puntos1, puntos2)]
+    similitud = 1 / (1 + (sum(distancias) / len(distancias)))
+    return similitud
 
-label = ttk.Label(main_frame, text="Presiona el botón para tomar una foto y registrar los datos del usuario")
-label.grid(row=0, column=0, pady=10)
+# Función para comparar datos del formulario
+from Levenshtein import ratio
 
-boton_tomar_foto = ttk.Button(main_frame, text="Tomar Foto y Registrar", command=tomar_foto_y_guardar_datos)
-boton_tomar_foto.grid(row=1, column=0, pady=10)
+def comparar_cadenas(str1, str2):
+    str1_norm = normalizar_texto(str1)
+    str2_norm = normalizar_texto(str2)
+    return ratio(str1_norm, str2_norm)
 
-ventana.mainloop()
+def comparar_datos_formulario(datos_mongo, datos_django):
+    campos = [
+        ('nombre', 'first_name', 0.20),
+        ('apellido', 'last_name', 0.20),
+        ('ciudad', 'birth_city', 0.10),
+        ('genero', 'gender', 0.10),
+        ('fecha_nacimiento', 'birth_date', 0.10) 
+    ]
+    similitud_total = 0
+    for campo_mongo, campo_django, peso in campos:
+        valor_mongo = str(datos_mongo.get(campo_mongo, ''))
+        valor_django = str(getattr(datos_django, campo_django, ''))
+        
+        if campo_mongo == 'fecha_nacimiento':
+            fecha_mongo = normalizar_fecha(valor_mongo)
+            fecha_django = normalizar_fecha(valor_django)
+            similitud = 1 if fecha_mongo == fecha_django else 0
+        else:
+            similitud = comparar_cadenas(valor_mongo, valor_django)
+        
+        similitud_total += similitud * peso
+        print(f"Campo: {campo_mongo}, Similitud: {similitud}, Peso: {peso}")
+    
+    return similitud_total
+
+def buscar_coincidencias(silent=False):
+    usuarios_mongo = users_collection.find()
+    resultados = []
+    
+    print(f"Número de usuarios en MongoDB: {users_collection.count_documents({})}")
+    print(f"Número de StreetPersons en Django: {StreetPerson.objects.count()}")
+    
+    for usuario_mongo in usuarios_mongo:
+        street_persons = StreetPerson.objects.all()
+        coincidencias = []
+        
+        for street_person in street_persons:
+            similitud_formulario = comparar_datos_formulario(usuario_mongo, street_person)
+            
+            facial_mongo = facial_data_collection.find_one({"common_id": usuario_mongo['common_id']})
+            facial_django = Photo.objects.filter(profile=street_person.profile).first()
+            
+            if facial_mongo and facial_django and hasattr(facial_django, 'faciallandmarks'):
+                similitud_facial = calcular_similitud_facial(facial_mongo['facial_points'], facial_django.faciallandmarks.data)
+            else:
+                similitud_facial = 0
+            
+            similitud_total = similitud_formulario + (0.3 * similitud_facial)
+            
+            if similitud_total >= 0.6:
+                coincidencias.append({
+                    'street_person': street_person,
+                    'similitud_total': similitud_total,
+                    'similitud_formulario': similitud_formulario,
+                    'similitud_facial': similitud_facial,
+                    'datos_mongo': usuario_mongo,
+                    'datos_django': street_person
+                })
+        
+        mejores_coincidencias = sorted(coincidencias, key=lambda x: x['similitud_total'], reverse=True)[:3]
+        
+        if mejores_coincidencias:
+            resultados.append({
+                'usuario_mongo': usuario_mongo,
+                'mejores_coincidencias': mejores_coincidencias
+            })
+    return resultados
+
+def verificar_decision_previa(common_id, silent=False):
+    usuario = users_collection.find_one({'common_id': common_id})
+    if 'decisiones_reencuentro' in usuario:
+        ultima_decision = usuario['decisiones_reencuentro'][-1]
+        if not silent:
+            print(f"Nota: Esta persona decidió no re-encontrarse con su familia en {ultima_decision['fecha']}.")
+        return ultima_decision
+    return None
+
+def mostrar_resultados_y_obtener_decision(resultados):
+    for resultado in resultados:
+        decision_previa = verificar_decision_previa(resultado['usuario_mongo']['common_id'])
+        
+        mensaje = f"Usuario: {resultado['usuario_mongo']['nombre']} {resultado['usuario_mongo']['apellido']}\n\n"
+        if decision_previa:
+            mensaje += f"Decisión previa: No re-encontrarse (fecha: {decision_previa['fecha']})\n\n"
+        mensaje += "Mejores coincidencias:\n"
+        for coincidencia in resultado['mejores_coincidencias']:
+            street_person = coincidencia['street_person']
+            mensaje += f"  - {street_person.first_name} {street_person.last_name}\n"
+            mensaje += f"    Similitud total: {coincidencia['similitud_total']:.2f}\n"
+            mensaje += f"    Similitud formulario: {coincidencia['similitud_formulario']:.2f}\n"
+            mensaje += f"    Similitud facial: {coincidencia['similitud_facial']:.2f}\n"
+            mensaje += f"    Datos MongoDB: Nombre: {coincidencia['datos_mongo'].get('nombre')}, Apellido: {coincidencia['datos_mongo'].get('apellido')}, Ciudad: {coincidencia['datos_mongo'].get('ciudad')}, Género: {coincidencia['datos_mongo'].get('genero')}\n"
+            mensaje += f"    Datos Django: Nombre: {street_person.first_name}, Apellido: {street_person.last_name}, Ciudad: {street_person.birth_city}, Género: {street_person.gender}\n\n"
+        
+        decision = messagebox.askyesno("Decisión de Reencuentro", 
+                                       mensaje + "\n¿La persona desea re-encontrarse con su familia?")
+        
+        if decision:
+            enviar_notificacion(resultado['usuario_mongo']['common_id'])
+            messagebox.showinfo("Notificación Enviada", "Se ha enviado una notificación a Integración Social.")
+        else:
+            guardar_decision_negativa(resultado['usuario_mongo']['common_id'])
+            messagebox.showinfo("Decisión Guardada", "Se ha guardado la decisión. Se recordará en futuras interacciones.")
+
+def enviar_notificacion(common_id):
+    # Aquí iría el código para enviar la notificación a Integración Social
+    print(f"Enviando notificación para el usuario con common_id: {common_id}")
+
+def guardar_decision_negativa(common_id):
+    decision_reencuentro = {
+        'fecha': datetime.now(),
+        'decision': 'no'
+    }
+    users_collection.update_one(
+        {'common_id': common_id},
+        {'$push': {'decisiones_reencuentro': decision_reencuentro}}
+    )
+    print(f"Decisión negativa guardada para el usuario con common_id: {common_id}")
+
+def mostrar_notificacion_nuevas_coincidencias(resultados):
+    if resultados:
+        messagebox.showinfo("Nuevas Coincidencias", f"Se han encontrado {len(resultados)} nuevas coincidencias.")
+
+# Añadir esta función si no está definida
+def crear_ventana_principal():
+    ventana = tk.Tk()
+    ventana.title("Registro de Usuario y Búsqueda de Coincidencias")
+
+    main_frame = ttk.Frame(ventana, padding="10")
+    main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+    main_frame.columnconfigure(0, weight=1)
+
+    label = ttk.Label(main_frame, text="Presiona el botón para tomar una foto y registrar los datos del usuario")
+    label.grid(row=0, column=0, pady=10)
+
+    boton_tomar_foto = ttk.Button(main_frame, text="Tomar Foto y Registrar", command=tomar_foto_y_guardar_datos)
+    boton_tomar_foto.grid(row=1, column=0, pady=10)
+
+    boton_buscar = ttk.Button(main_frame, text="Buscar Coincidencias", command=mostrar_resultados_busqueda)
+    boton_buscar.grid(row=2, column=0, pady=10)
+
+    return ventana
+
+def mostrar_resultados_busqueda():
+    resultados = buscar_coincidencias()
+    ventana.after(0, lambda: mostrar_resultados_y_obtener_decision(resultados))
+
+if __name__ == "__main__":
+    # Creación de la ventana principal
+    ventana = crear_ventana_principal()
+
+    ventana.mainloop()

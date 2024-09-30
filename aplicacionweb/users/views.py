@@ -10,12 +10,12 @@ from .forms import CustomUserCreationForm, StreetPersonForm
 from photos.forms import PhotoUploadForm
 from photos.models import Photo
 from .models import CustomUser, StreetPerson, StreetPersonHistory
+import uuid
+from .utils import generate_common_id
 
-# Vista para la página de inicio
 def home(request):
     return render(request, 'users/home.html')
 
-# Vista para el registro de usuarios
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -31,7 +31,6 @@ def register(request):
         form = CustomUserCreationForm()
     return render(request, 'users/register.html', {'form': form})
 
-# Vista para el login de usuarios
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -46,38 +45,39 @@ def login_view(request):
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})
 
-# Vista para el logout de usuarios
 @login_required
 def logout_view(request):
     logout(request)
     return redirect('home')
 
-# Vista personalizada para el reseteo de contraseña
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/reset_password.html'
     success_url = reverse_lazy('password_reset_done')
     email_template_name = 'users/password_reset_email.html'
     form_class = PasswordResetForm
 
-# Vista personalizada para la confirmación de envío de email para reseteo de contraseña
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'users/password_reset_sent.html'
 
-# Vista personalizada para la confirmación del reseteo de contraseña
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'users/password_reset_confirm.html'
     success_url = reverse_lazy('password_reset_complete')
     form_class = SetPasswordForm
 
-# Vista personalizada para la finalización del reseteo de contraseña
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'users/password_reset_complete.html'
 
-# Vista para el perfil de usuario con subida de fotos y gestión de StreetPerson
 @login_required
 def profile(request):
     photo_form = PhotoUploadForm()
-    street_person_form = StreetPersonForm()
+    street_person = StreetPerson.objects.filter(profile__user=request.user).last()
+    street_person_form = StreetPersonForm(instance=street_person)
+
+    if street_person_form.is_valid():
+        street_person_data = street_person_form.save(commit=False)
+        if not street_person_data.common_id:
+            street_person_data.common_id = generate_common_id()  # Implementa esta función
+        street_person_data.save()
 
     if request.method == 'POST':
         if 'photo_form_submit' in request.POST:
@@ -85,34 +85,36 @@ def profile(request):
             if photo_form.is_valid():
                 photo = photo_form.save(commit=False)
                 photo.user = request.user
-                photo.profile = request.user.profile  # Asignar el perfil del usuario
+                photo.profile = request.user.profile
                 photo.save()
                 return redirect('profile')
         elif 'street_person_form_submit' in request.POST:
-            street_person_form = StreetPersonForm(request.POST)
+            print("Formulario de StreetPerson enviado")
+            street_person_form = StreetPersonForm(request.POST, instance=street_person)
             if street_person_form.is_valid():
-                street_person_data = street_person_form.save(commit=False)
-                street_person_data.profile = request.user.profile  # Asignar el perfil del usuario
-                street_person_data.save()
+                print("Formulario válido. Datos:", street_person_form.cleaned_data)
+                try:
+                    street_person_data = street_person_form.save(commit=False)
+                    street_person_data.profile = request.user.profile
+                    street_person_data.save()
+                    print(f"StreetPerson guardado con ID: {street_person_data.id}")
 
-                # Guardar el historial de cambios
-                StreetPersonHistory.objects.create(
-                    street_person=street_person_data,
-                    modified_by=request.user,
-                    changes={
-                        'first_name': street_person_data.first_name,
-                        'last_name': street_person_data.last_name,
-                        'birth_date': street_person_data.birth_date,
-                        'birth_city': street_person_data.birth_city,
-                        'alias': street_person_data.alias,
-                        'gender': street_person_data.gender,
-                    }
-                )
+                    # Guardar el historial de cambios
+                    changes = {field: str(street_person_form.cleaned_data[field]) for field in street_person_form.changed_data}
+                    StreetPersonHistory.objects.create(
+                        street_person=street_person_data,
+                        modified_by=request.user,
+                        changes=changes
+                    )
+                    print("StreetPersonHistory creado exitosamente")
 
-                return redirect('profile')
+                    return redirect('profile')
+                except Exception as e:
+                    print(f"Error al guardar StreetPerson: {str(e)}")
+            else:
+                print("Formulario no válido. Errores:", street_person_form.errors)
 
-    photos = Photo.objects.filter(user=request.user, visible=True)  # Filtrar solo fotos visibles
-    street_person = StreetPerson.objects.filter(profile__user=request.user).last()
+    photos = Photo.objects.filter(user=request.user, visible=True)
 
     return render(request, 'users/profile.html', {
         'photo_form': photo_form,
@@ -121,15 +123,14 @@ def profile(request):
         'street_person': street_person
     })
 
-# Vista para confirmar la eliminación de una foto solo visualmente
 @login_required
 @csrf_protect
 def delete_photo(request, photo_id):
     print(f"Request to delete photo with id: {photo_id}")
     photo = get_object_or_404(Photo, id=photo_id)
     if request.method == 'POST':
-        photo.visible = False  # Marcar la foto como no visible en lugar de eliminarla físicamente
+        photo.visible = False
         photo.save()
-        print(f"photo with id {photo_id} market as no visible")
+        print(f"photo with id {photo_id} marked as not visible")
         return redirect('profile')
     return HttpResponse("Photo not deleted")
