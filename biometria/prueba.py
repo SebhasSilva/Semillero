@@ -300,6 +300,7 @@ def tomar_foto_y_guardar_datos():
 
     cap.release()
     cv2.destroyAllWindows()
+    
 import cv2
 import dlib
 import tkinter as tk

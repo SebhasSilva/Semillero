@@ -14,7 +14,7 @@ class PhotoAdmin(admin.ModelAdmin):
     get_username.short_description = 'Username'
 
     def get_id_number(self, obj):
-        return obj.profile.id_number  # Accedemos al id_number del perfil
+        return obj.profile.id_number
 
     get_id_number.short_description = 'ID Number'
 
@@ -35,16 +35,32 @@ class FacialLandmarksAdmin(admin.ModelAdmin):
 
     def formatted_data(self, obj):
         try:
-            landmarks = json.loads(obj.data)  # Convertimos la cadena JSON en un diccionario
+            landmarks_data = json.loads(obj.data)
         except json.JSONDecodeError:
             return "Invalid JSON"
         
-        if not landmarks:
+        if not landmarks_data:
             return "-"
         
         html = "<table style='border: 1px solid black; border-collapse: collapse;'>"
-        for key, value in landmarks.items():
-            html += f"<tr><td style='border: 1px solid black; padding: 5px;'>{key}</td><td style='border: 1px solid black; padding: 5px;'>{value}</td></tr>"
+        
+        if isinstance(landmarks_data, list):
+            for i, landmark in enumerate(landmarks_data):
+                html += f"<tr><th colspan='2' style='border: 1px solid black; padding: 5px;'>Face {i+1}</th></tr>"
+                for key, value in landmark.items():
+                    if key == 'landmarks':
+                        html += f"<tr><td style='border: 1px solid black; padding: 5px;'>{key}</td><td style='border: 1px solid black; padding: 5px;'>{len(value)} points</td></tr>"
+                    else:
+                        html += f"<tr><td style='border: 1px solid black; padding: 5px;'>{key}</td><td style='border: 1px solid black; padding: 5px;'>{value}</td></tr>"
+        elif isinstance(landmarks_data, dict):
+            for key, value in landmarks_data.items():
+                if key == 'landmarks':
+                    html += f"<tr><td style='border: 1px solid black; padding: 5px;'>{key}</td><td style='border: 1px solid black; padding: 5px;'>{len(value)} points</td></tr>"
+                else:
+                    html += f"<tr><td style='border: 1px solid black; padding: 5px;'>{key}</td><td style='border: 1px solid black; padding: 5px;'>{value}</td></tr>"
+        else:
+            return "Unexpected data format"
+        
         html += "</table>"
         return format_html(html)
 

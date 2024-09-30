@@ -1,92 +1,164 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <title>Perfil de Usuario</title>
     <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
         .profile-container {
-            display: flex;
-            justify-content: space-between;
+            border: 2px solid #093a46;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-top: 50px;
+        }
+        
+        .profile-header {
+            background-color: #2f3034;
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            margin: -30px -30px 30px -30px;
+        }
+        .profile-section {
+            height: 100%;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
-        .profile-details, .street-person-form, .photo-album {
-            flex: 1;
-            margin: 0 10px;
+        .profile-section:hover{
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.7);
         }
-
         .photo-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-gap: 10px;
-            overflow-y: auto;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-gap: 15px;
             max-height: 500px;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
         }
-
-        .photo-item img {
-            width: 100%;
-            height: auto;
-            max-width: 100px;
-            max-height: 100px;
-        }
-
         .photo-item {
             position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
         }
-
+        .photo-item:hover {
+            transform: scale(1.05);
+        }
+        .photo-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
         .delete-btn {
             position: absolute;
             top: 5px;
             right: 5px;
-            background: transparent;
-            border: none;
-            font-size: 18px;
+            background-color: rgba(255,255,255,0.7);
+            border: 10px;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
             cursor: pointer;
-            color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
         }
-
         .delete-btn:hover {
-            color: red;
+            background-color: rgba(255,0,0,0.7);
+            color: white;
         }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-            padding-top: 60px;
+        .btn-primary {
+            background-color: #CC5500;
+            border: none;
+            transition: background-color 0.3s ease;
         }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
+        .btn-primary:hover {
+            background-color: #068c2c;
         }
-
-        .modal-close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .modal-close:hover,
-        .modal-close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
         .logout-button-container {
-            position: absolute;
+            position: fixed;
             top: 10px;
-            right: 10px;
+            right: 14px;
+            z-index: 1000;
+        }
+
+        .btn-outline-danger {
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-danger:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+        .modal-content {
+            border-radius: 15px;
+        }
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+        .modal-footer {
+            border-radius: 0 0 15px 15px;
+        }
+        .custom-file-upload {
+            border: 2px solid #000000;
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: #CC5500;
+            color: #ffffff;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #068c2c;
+            color: white;
+        }
+
+        .form-control {
+            border: none;
+            border-bottom: 1px solid #ccc;
+            border-radius: 0;
+            padding-left: 0;
+        }
+
+        .form-control:focus {
+            box-shadow: none;
+            border-color: #007bff;
+        }
+
+        .form-floating > label {
+            padding-left: 0;
+        }
+
+        .select-masculino {
+            background-color: #e6f2ff !important; /* Azul claro */
+            color: #0066cc !important; /* Azul oscuro para el texto */
+        }
+
+        .select-femenino {
+            background-color: #ffe6f2 !important; /* Rosa claro */
+            color: #cc0066 !important; /* Rosa oscuro para el texto */
         }
     </style>
 </head>
@@ -94,92 +166,150 @@
     <div class="logout-button-container">
         <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Cerrar Sesión</button>
+            <button class="btn btn-outline-danger" type="submit">Cerrar Sesión</button>
         </form>
     </div>
+    <div class="container">
 
-    <h1>Perfil de Usuario</h1>
-    <div class="profile-container">
-        <!-- Información básica del usuario -->
-        <div class="profile-details">
-            <h2>Información del Usuario</h2>
-            <p>Usuario: {{ user.username }}</p>
-            <p>Nombre: {{ user.first_name }} {{ user.last_name }}</p>
-            <p>Correo: {{ user.email }}</p>
-        </div>
-
-        <!-- Formulario de la persona en situación de calle -->
-        <div class="street-person-form">
-            <h2>Persona en situación de calle</h2>
-            <form method="post">
-                {% csrf_token %}
-                {{ street_person_form.as_p }}
-                <button type="submit" name="street_person_form_submit">Enviar</button>
-            </form>
-        </div>
-
-        <!-- Álbum de fotos -->
-        <div class="photo-album">
-            <h2>Fotos subidas</h2>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ photo_form.as_p }}
-                <button type="submit" name="photo_form_submit">Subir foto</button>
-            </form>
-            <div class="photo-grid">
-                {% for photo in photos %}
-                    <div class="photo-item">
-                        <img src="{{ photo.image.url }}" alt="Foto de {{ user.username }}">
-                        <button class="delete-btn" data-photo-id="{{ photo.id }}">X</button>
+            <div class="profile-container">
+                <div class="profile-header">
+                    <h1 class="text-center">Perfil de Usuario</h1>
+                </div>
+            
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="profile-section">
+                                <h2>Información del Usuario</h2>
+                                <p><strong>Usuario:</strong> {{ user.username }}</p>
+                                <p><strong>Nombre:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                                <p><strong>Correo:</strong> {{ user.email }}</p>
+                            </div>
+                        </div>
+                
+                        <div class="col-md-4">
+                            <div class="profile-section">
+                                <h2>Persona en situación de calle</h2>
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <div class="form-floating mb-3">
+                                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Nombres" value="{{ street_person.first_name|default:'' }}">
+                                        <label for="first_name">Nombres</label>
+                                    </div>
+                                    <div class="form-floating mb-3">
+                                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Apellidos" value="{{ street_person.last_name|default:'' }}">
+                                        <label for="last_name">Apellidos</label>
+                                    </div>
+                                    <div class="form-floating mb-3">
+                                        <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ street_person.birth_date|date:'Y-m-d'|default:'' }}">
+                                        <label for="birth_date">Fecha de nacimiento</label>
+                                    </div>
+                                    <div class="form-floating mb-3">
+                                        <input type="text" class="form-control" id="birth_city" name="birth_city" placeholder="Ciudad de nacimiento" value="{{ street_person.birth_city|default:'' }}">
+                                        <label for="birth_city">Ciudad de nacimiento</label>
+                                    </div>
+                                    <div class="form-floating mb-3">
+                                        <input type="text" class="form-control" id="alias" name="alias" placeholder="Alias" value="{{ street_person.alias|default:'' }}">
+                                        <label for="alias">Alias</label>
+                                    </div>
+                                    <div class="form-floating mb-3">
+                                        <select class="form-select" id="gender" name="gender">
+                                            <option value="" {% if not street_person.gender %}selected{% endif %}>Selecciona una opción</option>
+                                            <option value="M" {% if street_person.gender == 'M' %}selected{% endif %}>Masculino</option>
+                                            <option value="F" {% if street_person.gender == 'F' %}selected{% endif %}>Femenino</option>
+                                        </select>
+                                        <label for="gender">Género</label>
+                                    </div>
+                                    <button class="btn btn-primary w-100" type="submit" name="street_person_form_submit">Guardar</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="profile-section">
+                                <h2>Fotos subidas</h2>
+                                <form method="post" enctype="multipart/form-data" class="mb-3">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label for="id_image" class="custom-file-upload">
+                                            <i class="fas fa-cloud-upload-alt"></i> Seleccionar archivo
+                                        </label>
+                                        <input id="id_image" type="file" name="image" accept="image/*" style="display: none;" />
+                                        <div class="file-name"></div>
+                                    </div>
+                                    <button class="btn btn-primary w-100" type="submit" name="photo_form_submit">Subir foto</button>
+                                </form>
+                                <div class="photo-grid">
+                                    {% for photo in photos %}
+                                        <div class="photo-item">
+                                            <img src="{{ photo.image.url }}" alt="Foto de {{ user.username }}">
+                                            <button class="delete-btn" data-photo-id="{{ photo.id }}">&times;</button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                {% endfor %}
+            </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que quieres eliminar esta foto?</p>
+                </div>
+                <div class="modal-footer">
+                    <form id="deletePhotoForm" method="post">
+                        {% csrf_token %}
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <p>¿Estás seguro de que quieres eliminar esta foto?</p>
-            <form id="deletePhotoForm" method="post">
-                {% csrf_token %}
-                <button type="submit">Sí</button>
-                <button type="button" id="cancelDelete">No</button>
-            </form>
-        </div>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var deleteButtons = document.querySelectorAll('.delete-btn');
-            var modal = document.getElementById('deleteModal');
-            var closeModal = document.querySelector('.modal-close');
-            var cancelDelete = document.getElementById('cancelDelete');
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             var deleteForm = document.getElementById('deletePhotoForm');
+            var fileInput = document.getElementById('id_image');
+            var fileNameDisplay = document.querySelector('.file-name');
+            var generoSelect = document.getElementById('genero');
             
             deleteButtons.forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     var photoId = this.getAttribute('data-photo-id');
                     deleteForm.action = '/photos/delete/' + photoId + '/';
-                    modal.style.display = 'block';
+                    deleteModal.show();
                 });
             });
-
-            closeModal.addEventListener('click', function () {
-                modal.style.display = 'none';
+    
+            fileInput.addEventListener('change', function(e) {
+                var fileName = e.target.files[0].name;
+                fileNameDisplay.textContent = 'Archivo seleccionado: ' + fileName;
             });
-
-            cancelDelete.addEventListener('click', function () {
-                modal.style.display = 'none';
-            });
-
-            window.addEventListener('click', function (event) {
-                if (event.target == modal) {
-                    modal.style.display = 'none';
+    
+            // Nuevo código para el cambio de color del select de género
+            generoSelect.addEventListener('change', function() {
+                // Remover clases previas
+                this.classList.remove('select-masculino', 'select-femenino');
+                
+                // Añadir clase según la selección
+                if (this.value === 'masculino') {
+                    this.classList.add('select-masculino');
+                } else if (this.value === 'femenino') {
+                    this.classList.add('select-femenino');
                 }
             });
         });
     </script>
-</body>
-</html>
+    </body>
+    </html>
