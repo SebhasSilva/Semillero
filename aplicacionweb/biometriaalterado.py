@@ -14,6 +14,9 @@ import time
 import math
 import os
 import django
+import json
+import math
+import numpy as np
 
 def normalizar_texto(texto):
     return texto.lower().strip()
@@ -325,15 +328,31 @@ def tomar_foto_y_guardar_datos():
     cap.release()
     cv2.destroyAllWindows()
 
-# NUEVAS FUNCIONES PARA EL MATCHING
-
-# Función para calcular la similitud facial
 def calcular_similitud_facial(puntos1, puntos2):
+    print(f"Tipo de puntos1: {type(puntos1)}, Longitud: {len(puntos1)}")
+    print(f"Tipo de puntos2: {type(puntos2)}, Longitud: {len(puntos2)}")
+
+    if not puntos1 or not puntos2:
+        print("Uno o ambos conjuntos de puntos están vacíos")
+        return 0
     if len(puntos1) != len(puntos2):
+        print(f"Longitudes diferentes: {len(puntos1)} vs {len(puntos2)}")
         return 0
     
-    distancias = [math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2) for p1, p2 in zip(puntos1, puntos2)]
-    similitud = 1 / (1 + (sum(distancias) / len(distancias)))
+    # Convertir a numpy arrays para cálculos más eficientes
+    puntos1 = np.array(puntos1, dtype=np.float64)
+    puntos2 = np.array(puntos2, dtype=np.float64)
+    
+    # Normalizar los puntos
+    puntos1 = (puntos1 - puntos1.min(axis=0)) / (puntos1.max(axis=0) - puntos1.min(axis=0))
+    puntos2 = (puntos2 - puntos2.min(axis=0)) / (puntos2.max(axis=0) - puntos2.min(axis=0))
+    
+    # Calcular distancia euclidiana media directamente
+    distancia_media = np.mean(np.sqrt(np.sum((puntos1 - puntos2)**2, axis=1)))
+    
+    # Calcular similitud
+    similitud = 1 / (1 + distancia_media)
+    
     return similitud
 
 # Función para comparar datos del formulario
@@ -385,11 +404,40 @@ def buscar_coincidencias(silent=False):
             
             facial_mongo = facial_data_collection.find_one({"common_id": usuario_mongo['common_id']})
             facial_django = Photo.objects.filter(profile=street_person.profile).first()
-            
-            if facial_mongo and facial_django and hasattr(facial_django, 'faciallandmarks'):
-                similitud_facial = calcular_similitud_facial(facial_mongo['facial_points'], facial_django.faciallandmarks.data)
-            else:
-                similitud_facial = 0
+           
+            similitud_facial = 0
+            if facial_mongo and facial_django:
+                print(f"facial_mongo: {facial_mongo}")
+                print(f"facial_django: {facial_django}")
+                try:
+                    facial_points_mongo = facial_mongo.get('facial_points', [])
+                    
+                    # Acceder a los landmarks a través de la relación
+                    landmarks = getattr(facial_django, 'landmarks', None)
+                    if landmarks:
+                        facial_points_django = json.loads(landmarks.data)
+                        
+                        if isinstance(facial_points_django, list) and len(facial_points_django) > 0:
+                            if isinstance(facial_points_django[0], dict):
+                                facial_points_django = facial_points_django[0].get('landmarks', [])
+                        
+                        if facial_points_mongo and facial_points_django:
+                            print(f"Número de puntos en MongoDB: {len(facial_points_mongo)}")
+                            print(f"Número de puntos en Django: {len(facial_points_django)}")
+                            similitud_facial = calcular_similitud_facial(facial_points_mongo, facial_points_django)
+                            print(f"Similitud facial calculada: {similitud_facial}")
+                            if similitud_facial >= 0.8:  #Umbral de similitud facial
+                                similitud_facial = similitud_facial
+                            else:
+                                similitud_facial = 0
+                        else:
+                            print(f"Datos faciales faltantes para StreetPerson {street_person.id} o usuario MongoDB {usuario_mongo['common_id']}")
+                    else:
+                        print(f"No se encontraron landmarks para la foto de StreetPerson {street_person.id}")
+                except json.JSONDecodeError:
+                    print(f"Error al decodificar datos faciales de Django para StreetPerson {street_person.id}")
+                except Exception as e:
+                    print(f"Error al procesar datos faciales: {str(e)}")
             
             similitud_total = similitud_formulario + (0.3 * similitud_facial)
             
@@ -422,6 +470,9 @@ def verificar_decision_previa(common_id, silent=False):
     return None
 
 def mostrar_resultados_y_obtener_decision(resultados):
+    if not resultados:
+        messagebox.showinfo("Sin coincidencias", "No se encontraron coincidencias.")
+        return
     for resultado in resultados:
         decision_previa = verificar_decision_previa(resultado['usuario_mongo']['common_id'])
         
