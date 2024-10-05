@@ -19,6 +19,7 @@ import json
 import math
 import numpy as np
 from django.core.wsgi import get_wsgi_application
+import sys
 
 def normalizar_texto(texto):
     return texto.lower().strip()
@@ -31,6 +32,8 @@ def normalizar_fecha(fecha_str):
         except ValueError:
             continue
     return None
+
+sys.path.append('C:/Users/silva/OneDrive/Documentos/Proyectoteinco/aplicacionweb')
 
 # Configurar Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aplicacionweb.settings")
@@ -387,7 +390,7 @@ def comparar_datos_formulario(datos_mongo, datos_django):
         
         similitud_total += similitud * peso
         print(f"Campo: {campo_mongo}, Similitud: {similitud}, Peso: {peso}")
-    
+
     return similitud_total
 
 def buscar_coincidencias(silent=False):
@@ -450,7 +453,9 @@ def buscar_coincidencias(silent=False):
                     'similitud_formulario': similitud_formulario,
                     'similitud_facial': similitud_facial,
                     'datos_mongo': usuario_mongo,
-                    'datos_django': street_person
+                    'datos_django': street_person,
+                    'profile_id_number': street_person.profile.id_number,  # Añadido: ID_NUMBER del perfil
+                    'common_id': usuario_mongo['common_id']  # Añadido: common_id de MongoDB
                 })
         
         mejores_coincidencias = sorted(coincidencias, key=lambda x: x['similitud_total'], reverse=True)[:3]
@@ -489,43 +494,62 @@ def mostrar_resultados_y_obtener_decision(resultados):
             mensaje += f"    Similitud formulario: {coincidencia['similitud_formulario']:.2f}\n"
             mensaje += f"    Similitud facial: {coincidencia['similitud_facial']:.2f}\n"
             mensaje += f"    Datos MongoDB: Nombre: {coincidencia['datos_mongo'].get('nombre')}, Apellido: {coincidencia['datos_mongo'].get('apellido')}, Ciudad: {coincidencia['datos_mongo'].get('ciudad')}, Género: {coincidencia['datos_mongo'].get('genero')}\n"
-            mensaje += f"    Datos Django: Nombre: {street_person.first_name}, Apellido: {street_person.last_name}, Ciudad: {street_person.birth_city}, Género: {street_person.gender}\n\n"
+            mensaje += f"    Datos Django: Nombre: {street_person.first_name}, Apellido: {street_person.last_name}, Ciudad: {street_person.birth_city}, Género: {street_person.gender}\n"
+            mensaje += f"    Profile ID Number: {coincidencia['profile_id_number']}, Common ID: {coincidencia['common_id']}\n\n"
         
         decision = messagebox.askyesno("Decisión de Reencuentro", 
                                        mensaje + "\n¿La persona desea re-encontrarse con su familia?")
         
         if decision:
-            enviar_notificacion(resultado['usuario_mongo']['common_id'])
+            # Usamos tanto profile_id_number como common_id para enviar la notificación
+            enviar_notificacion(coincidencia['profile_id_number'], coincidencia['common_id'])
             messagebox.showinfo("Notificación Enviada", "Se ha enviado una notificación a Integración Social.")
         else:
             guardar_decision_negativa(resultado['usuario_mongo']['common_id'])
             messagebox.showinfo("Decisión Guardada", "Se ha guardado la decisión. Se recordará en futuras interacciones.")
 
+# Asegúrate de que esta función esté actualizada para usar ambos identificadores
 import requests
+from django.conf import settings
 
-def enviar_notificacion(common_id):
+def enviar_notificacion(profile_id_number, common_id):
     try:
-        street_person = StreetPerson.objects.get(common_id=common_id)
-        profile = street_person.profile
-        
         # Preparar los datos para la notificación
         data = {
-            "profile_id": profile.id_number,
-            "message": "Una persona en situación de calle desea reencontrarse con su familia."
+            "profile_id": profile_id_number,
+            "message": "Una persona en situación de calle desea reencontrarse con su familia.",
+            "common_id": common_id  # Añadimos el common_id para referencia
         }
         
-        # Enviar la notificación al nuevo endpoint
-        response = requests.post("http://tudominio.com/users/receive-notification/", json=data)
+        # Obtener la URL del endpoint desde la configuración de Django
+        notification_url = settings.NOTIFICATION_ENDPOINT
         
-        if response.status_code == 201:
-            print(f"Notificación enviada exitosamente al perfil con ID: {profile.id}")
-        else:
-            print(f"Error al enviar la notificación: {response.text}")
+        # Enviar la notificación al endpoint
+        response = requests.post(notification_url, json=data, timeout=10)
+        
+        response.raise_for_status()  # Esto lanzará una excepción para códigos de estado HTTP 4XX/5XX
+        
+        print(f"Notificación enviada exitosamente:")
+        print(f"  - Perfil ID: {profile_id_number}")
+        print(f"  - Common ID: {common_id}")
+        print(f"  - Respuesta del servidor: {response.text}")
+        
+        return True  # Indicar que la notificación se envió con éxito
     
-    except StreetPerson.DoesNotExist:
-        print(f"No se encontró StreetPerson con common_id: {common_id}")
+    except requests.RequestException as e:
+        print(f"Error de red al enviar la notificación:")
+        print(f"  - Tipo de error: {type(e).__name__}")
+        print(f"  - Descripción: {str(e)}")
     except Exception as e:
-        print(f"Error al enviar la notificación: {str(e)}")
+        print(f"Error inesperado al enviar la notificación:")
+        print(f"  - Tipo de error: {type(e).__name__}")
+        print(f"  - Descripción: {str(e)}")
+    
+    print(f"Detalles de la notificación fallida:")
+    print(f"  - Profile ID Number: {profile_id_number}")
+    print(f"  - Common ID: {common_id}")
+    
+    return False  # Indicar que la notificación falló
 
 def guardar_decision_negativa(common_id):
     decision_reencuentro = {

@@ -144,3 +144,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Ensure the SITE_ID is correctly set for sites framework
 SITE_ID = 1
+
+NOTIFICATION_ENDPOINT = 'http://127.0.0.1:8000/users/receive-notification/'
