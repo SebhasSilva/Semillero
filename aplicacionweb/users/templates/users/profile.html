@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <title>Perfil de Usuario</title>
     <style>
-        body {
+    body {
             font-family: 'Arial', sans-serif;
             background-color: #f4f4f4;
             color: #333;
@@ -160,8 +161,39 @@
             background-color: #ffe6f2 !important; /* Rosa claro */
             color: #cc0066 !important; /* Rosa oscuro para el texto */
         }
+
+        #notificationBtn {
+        font-size: 1.5rem;
+        padding: 0.5rem 1rem;
+        }
+
+    #notificationBadge {
+        font-size: 0.75rem;
+        }
+
+    .notification-container {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        width: 300px;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        }
+
+    .notification-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        }
+
+    .notification-item:last-child {
+        border-bottom: none;
+        }
     </style>
 </head>
+<div id="notificationCountHolder" data-count="{{ notification_count|default:0 }}" style="display: none;"></div>
 <body>
     <div class="logout-button-container">
         <form method="post" action="{% url 'logout' %}">
@@ -183,6 +215,32 @@
                                 <p><strong>Usuario:</strong> {{ user.username }}</p>
                                 <p><strong>Nombre:</strong> {{ user.first_name }} {{ user.last_name }}</p>
                                 <p><strong>Correo:</strong> {{ user.email }}</p>
+                                
+                                <!-- Botón de notificaciones -->
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-light position-relative" id="notificationBtn">
+                                        <i class="bi bi-bell-fill"></i>
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge">
+                                            0
+                                            <span class="visually-hidden">unread messages</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Contenedor de notificaciones -->
+                            <div id="notificationContainer" class="notification-container" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        Notificaciones
+                                    </div>
+                                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                                        <!-- Las notificaciones se cargarán aquí dinámicamente -->
+                                    </div>
+                                    <div class="card-footer">
+                                        <button id="markAllReadBtn" class="btn btn-sm btn-secondary">Marcar todas como leídas</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                 
@@ -282,8 +340,57 @@
             var deleteForm = document.getElementById('deletePhotoForm');
             var fileInput = document.getElementById('id_image');
             var fileNameDisplay = document.querySelector('.file-name');
-            var generoSelect = document.getElementById('genero');
+            var generoSelect = document.getElementById('gender');
+            var notificationBtn = document.getElementById('notificationBtn');
+            var notificationBadge = document.getElementById('notificationBadge');
+            var notificationContainer = document.getElementById('notificationContainer');
+            var notificationCount = parseInt(document.getElementById('notificationCountHolder').getAttribute('data-count'), 10);
             
+            function updateNotificationBadge() {
+                notificationBadge.textContent = notificationCount;
+                if (notificationCount === 0) {
+                    notificationBadge.style.display = 'none';
+                } else {
+                    notificationBadge.style.display = 'inline-block';
+                }
+            }
+
+            function toggleNotificationContainer() {
+                if (notificationContainer.style.display === 'none') {
+                    notificationContainer.style.display = 'block';
+                    loadNotifications();
+                } else {
+                    notificationContainer.style.display = 'none';
+                }
+            }
+
+            function loadNotifications() {
+                // Aquí cargarías las notificaciones reales desde el servidor
+                // Por ahora, simularemos esto
+                var notificationsHtml = '';
+                if (notificationCount > 0) {
+                    for (var i = 0; i < notificationCount; i++) {
+                        notificationsHtml += '<div class="notification-item">Notificación ' + (i + 1) + '</div>';
+                    }
+                } else {
+                    notificationsHtml = '<div class="notification-item">No tienes notificaciones nuevas</div>';
+                }
+                notificationContainer.querySelector('.card-body').innerHTML = notificationsHtml;
+            }
+
+            updateNotificationBadge();
+
+            notificationBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleNotificationContainer();
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!notificationContainer.contains(e.target) && e.target !== notificationBtn) {
+                    notificationContainer.style.display = 'none';
+                }
+            });
+
             deleteButtons.forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     var photoId = this.getAttribute('data-photo-id');
@@ -291,25 +398,21 @@
                     deleteModal.show();
                 });
             });
-    
+
             fileInput.addEventListener('change', function(e) {
                 var fileName = e.target.files[0].name;
                 fileNameDisplay.textContent = 'Archivo seleccionado: ' + fileName;
             });
-    
-            // Nuevo código para el cambio de color del select de género
+
             generoSelect.addEventListener('change', function() {
-                // Remover clases previas
                 this.classList.remove('select-masculino', 'select-femenino');
-                
-                // Añadir clase según la selección
-                if (this.value === 'masculino') {
+                if (this.value === 'M') {
                     this.classList.add('select-masculino');
-                } else if (this.value === 'femenino') {
+                } else if (this.value === 'F') {
                     this.classList.add('select-femenino');
                 }
+                });
             });
-        });
     </script>
     </body>
     </html>
