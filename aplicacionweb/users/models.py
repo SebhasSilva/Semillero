@@ -4,8 +4,6 @@ from django.db import models
 from django.utils import timezone
 import random
 
-
-
 class CustomUser(AbstractUser):
     GENDER_CHOICES = [
         ('M', 'Masculino'),
@@ -38,6 +36,18 @@ class Profile(models.Model):
             id_number = ''.join(random.choices('123456789', k=6))
             if not Profile.objects.filter(id_number=id_number).exists():
                 return id_number
+            
+class Notification(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='notifications')
+    message = models.CharField(max_length=255)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notification for {self.profile.user.username}: {self.message[:50]}..."
 
 class StreetPerson(models.Model):
     GENDER_CHOICES = [
@@ -79,3 +89,10 @@ class StreetPersonHistory(models.Model):
 # Importar aquí para evitar la circularidad
 from photos.models import Photo
 Profile.add_to_class('photos', models.ManyToManyField(Photo, blank=True, related_name='profile_photos'))
+
+# Añadimos un método al modelo Profile para crear notificaciones fácilmente
+def create_notification(self, message):
+    return Notification.objects.create(profile=self, message=message)
+
+# Añadimos el método al modelo Profile
+Profile.add_to_class('create_notification', create_notification)    
