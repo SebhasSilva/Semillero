@@ -235,7 +235,15 @@
                                         Notificaciones
                                     </div>
                                     <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                                        <!-- Las notificaciones se cargarán aquí dinámicamente -->
+                                        {% if notifications %}
+                                            <ul>
+                                            {% for notification in notifications %}
+                                                <li>{{ notification.message }} - {{ notification.created_at|date:"d/m/Y H:i" }}</li>
+                                            {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <p>No tienes notificaciones nuevas.</p>
+                                        {% endif %}
                                     </div>
                                     <div class="card-footer">
                                         <button id="markAllReadBtn" class="btn btn-sm btn-secondary">Marcar todas como leídas</button>

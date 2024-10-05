@@ -1,3 +1,4 @@
+import requests
 import cv2
 import dlib
 import tkinter as tk
@@ -17,6 +18,7 @@ import django
 import json
 import math
 import numpy as np
+from django.core.wsgi import get_wsgi_application
 
 def normalizar_texto(texto):
     return texto.lower().strip()
@@ -32,9 +34,9 @@ def normalizar_fecha(fecha_str):
 
 # Configurar Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aplicacionweb.settings")
-django.setup()
+django.setup()  
 
-# Importar modelos de Django
+from users.models import Profile, Notification
 from users.models import StreetPerson
 from photos.models import Photo
 
@@ -499,9 +501,31 @@ def mostrar_resultados_y_obtener_decision(resultados):
             guardar_decision_negativa(resultado['usuario_mongo']['common_id'])
             messagebox.showinfo("Decisión Guardada", "Se ha guardado la decisión. Se recordará en futuras interacciones.")
 
+import requests
+
 def enviar_notificacion(common_id):
-    # Aquí iría el código para enviar la notificación a Integración Social
-    print(f"Enviando notificación para el usuario con common_id: {common_id}")
+    try:
+        street_person = StreetPerson.objects.get(common_id=common_id)
+        profile = street_person.profile
+        
+        # Preparar los datos para la notificación
+        data = {
+            "profile_id": profile.id_number,
+            "message": "Una persona en situación de calle desea reencontrarse con su familia."
+        }
+        
+        # Enviar la notificación al nuevo endpoint
+        response = requests.post("http://tudominio.com/users/receive-notification/", json=data)
+        
+        if response.status_code == 201:
+            print(f"Notificación enviada exitosamente al perfil con ID: {profile.id}")
+        else:
+            print(f"Error al enviar la notificación: {response.text}")
+    
+    except StreetPerson.DoesNotExist:
+        print(f"No se encontró StreetPerson con common_id: {common_id}")
+    except Exception as e:
+        print(f"Error al enviar la notificación: {str(e)}")
 
 def guardar_decision_negativa(common_id):
     decision_reencuentro = {
