@@ -24,12 +24,25 @@ class CustomUserCreationForm(UserCreationForm):
     city = forms.CharField(max_length=100, required=True)
     gender = forms.ChoiceField(choices=GENDER_CHOICES, required=True)
 
+    # Nuevo campo para aceptación de tratamiento de datos
+    acepto_tratamiento = forms.BooleanField(
+        required=True,
+        label='Acepto el tratamiento de mis datos personales',
+        help_text='Debes aceptar el tratamiento de datos para registrarte.'
+    )
+
     class Meta:
         model = CustomUser
         fields = (
             'username', 'first_name', 'last_name', 'email', 'phone_number',
-            'birth_date', 'address', 'city', 'gender', 'password1', 'password2'
+            'birth_date', 'address', 'city', 'gender', 'password1', 'password2', 'acepto_tratamiento'
         )
+
+    def clean_acepto_tratamiento(self):
+        acepto = self.cleaned_data.get('acepto_tratamiento')
+        if not acepto:
+            raise forms.ValidationError("Debes aceptar el tratamiento de datos para registrarte.")
+        return acepto
 
 class StreetPersonForm(forms.ModelForm):
     GENDER_CHOICES = [

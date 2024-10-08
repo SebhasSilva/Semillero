@@ -530,11 +530,23 @@ def crear_ventana_principal():
     label = ttk.Label(main_frame, text="Presiona el botón para tomar una foto y registrar los datos del usuario")
     label.grid(row=0, column=0, pady=10)
 
-    boton_tomar_foto = ttk.Button(main_frame, text="Tomar Foto y Registrar", command=tomar_foto_y_guardar_datos)
-    boton_tomar_foto.grid(row=1, column=0, pady=10)
+    # Añadir el checkbox de autorización
+    autorizacion_var = tk.BooleanVar()
+    autorizacion_checkbox = ttk.Checkbutton(main_frame, text="Autorización para el tratamiento de datos personales", variable=autorizacion_var)
+    autorizacion_checkbox.grid(row=1, column=0, pady=5)
+
+    # Modificar la función del botón para verificar la autorización
+    def tomar_foto_con_autorizacion():
+        if autorizacion_var.get():
+            tomar_foto_y_guardar_datos()
+        else:
+            messagebox.showerror("Error", "Debe autorizar el tratamiento de datos personales para continuar.")
+
+    boton_tomar_foto = ttk.Button(main_frame, text="Tomar Foto y Registrar", command=tomar_foto_con_autorizacion)
+    boton_tomar_foto.grid(row=2, column=0, pady=10)
 
     boton_buscar = ttk.Button(main_frame, text="Buscar Coincidencias", command=mostrar_resultados_busqueda)
-    boton_buscar.grid(row=2, column=0, pady=10)
+    boton_buscar.grid(row=3, column=0, pady=10)
 
     return ventana
 

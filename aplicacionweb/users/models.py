@@ -15,6 +15,12 @@ class CustomUser(AbstractUser):
     address = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=100, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
+
+    # Nuevo campo para aceptación de tratamiento de datos
+    acepto_tratamiento = models.BooleanField(
+        default=False,
+        help_text="Indica si el usuario ha aceptado el tratamiento de sus datos personales."
+    )
     
     def save(self, *args, **kwargs):
         is_new = self._state.adding

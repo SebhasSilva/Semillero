@@ -50,7 +50,33 @@
         <label for="id_password2">Confirmar contraseña</label>
         {{ form.password2 }}
     </div>
+
+    <div class="form-group">
+        <label for="id_acepto_tratamiento">
+            <input type="checkbox" name="acepto_tratamiento" id="id_acepto_tratamiento" required>
+            Acepto el tratamiento de mis datos personales
+        </label>
+    </div>
+    
     <button type="submit" class="btn btn-primary">Regístrate</button>
     <button type="button" class="btn btn-secondary" onclick="window.history.back()">Atrás</button>
 </form>
+
+<div id="terminos-condiciones" style="display: none;">
+    <h3>Términos y Condiciones</h3>
+    <p>Aquí van los términos y condiciones del tratamiento de datos...</p>
+</div>
+
+<button onclick="mostrarTerminos()" class="btn btn-link">Ver Términos y Condiciones</button>
+
+<script>
+function mostrarTerminos() {
+    var terminos = document.getElementById('terminos-condiciones');
+    if (terminos.style.display === 'none') {
+        terminos.style.display = 'block';
+    } else {
+        terminos.style.display = 'none';
+    }
+}
+</script>
 {% endblock %}
