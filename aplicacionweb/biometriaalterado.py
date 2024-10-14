@@ -548,6 +548,9 @@ def crear_ventana_principal():
     boton_buscar = ttk.Button(main_frame, text="Buscar Coincidencias", command=mostrar_resultados_busqueda)
     boton_buscar.grid(row=3, column=0, pady=10)
 
+    boton_estadisticas = ttk.Button(main_frame, text="Ver Estadísticas")
+    boton_estadisticas.grid(row=4, column=0, pady=10)
+
     return ventana
 
 def mostrar_resultados_busqueda():
