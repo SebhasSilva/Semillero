@@ -24,6 +24,7 @@ urlpatterns = [
     path('users/', include('users.urls')),  # Incluir las URLs de la aplicación de usuarios
     path('photos/', include('photos.urls')),  # Incluir las URLs de la aplicación de fotos
     path('', user_views.home, name='home'),  # Ruta principal que apunta a la vista home de los usuarios
+    path('estadisticas/', user_views.estadisticas_view, name='estadisticas'),
 ]
 
 # Si está en modo DEBUG, servir archivos estáticos y de medios desde el directorio del proyecto

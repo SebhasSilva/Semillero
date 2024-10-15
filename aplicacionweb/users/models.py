@@ -1,8 +1,8 @@
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 import random
+from django.conf import settings
 
 class CustomUser(AbstractUser):
     GENDER_CHOICES = [
@@ -16,7 +16,6 @@ class CustomUser(AbstractUser):
     city = models.CharField(max_length=100, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
 
-    # Nuevo campo para aceptación de tratamiento de datos
     acepto_tratamiento = models.BooleanField(
         default=False,
         help_text="Indica si el usuario ha aceptado el tratamiento de sus datos personales."
@@ -56,6 +55,7 @@ class StreetPerson(models.Model):
     alias = models.CharField(max_length=50, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
+    common_id = models.CharField(max_length=50, unique=True, null=True)
 
     def to_mongo_dict(self):
         return {
@@ -68,17 +68,27 @@ class StreetPerson(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
-    
-    common_id = models.CharField(max_length=50, unique=True, null=True)
 
 class StreetPersonHistory(models.Model):
     street_person = models.ForeignKey(StreetPerson, on_delete=models.CASCADE, related_name='history')
     modified_at = models.DateTimeField(auto_now_add=True)
-    modified_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     changes = models.JSONField()
 
     def __str__(self):
         return f"History for {self.street_person} at {self.modified_at}"
+
+class FamilySearch(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    search_name = models.CharField(max_length=100)
+    search_birth_date = models.DateField()
+    search_gender = models.CharField(max_length=10)
+    search_last_seen = models.DateField()
+    search_description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Búsqueda de {self.search_name} por {self.user.username}"
 
 # Importar aquí para evitar la circularidad
 from photos.models import Photo

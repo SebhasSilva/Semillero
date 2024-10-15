@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     register, login_view, logout_view, profile, delete_photo, 
     CustomPasswordResetView, CustomPasswordResetDoneView, 
-    CustomPasswordResetConfirmView, CustomPasswordResetCompleteView
+    CustomPasswordResetConfirmView, CustomPasswordResetCompleteView, estadisticas_view 
 )
 
 urlpatterns = [
@@ -15,4 +15,4 @@ urlpatterns = [
     path('reset_password_sent/', CustomPasswordResetDoneView.as_view(), name='password_reset_done'),  # URL de confirmación de envío de email para reseteo de contraseña
     path('reset/<uidb64>/<token>/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),  # URL para confirmar el reseteo de contraseña
     path('reset_password_complete/', CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),  # URL para completar el reseteo de contraseña
-]
+]   

@@ -17,6 +17,8 @@ import django
 import json
 import math
 import numpy as np
+import webbrowser
+import secrets
 
 def normalizar_texto(texto):
     return texto.lower().strip()
@@ -44,6 +46,9 @@ db = client['ClusterSemillero']
 users_collection = db['users']
 facial_data_collection = db['facial_data']
 fs = gridfs.GridFS(db)
+
+# Configuración para la funcionalidad de estadísticas
+DJANGO_SERVER_URL = "http://127.0.0.1:8000"
 
 # Lista de opciones para departamentos y ciudades
 departamentos_y_ciudades = {
@@ -518,6 +523,14 @@ def mostrar_notificacion_nuevas_coincidencias(resultados):
     if resultados:
         messagebox.showinfo("Nuevas Coincidencias", f"Se han encontrado {len(resultados)} nuevas coincidencias.")
 
+def generar_token_temporal():
+    return secrets.token_urlsafe(32)
+
+def abrir_estadisticas():
+    token = generar_token_temporal()
+    url = f"{DJANGO_SERVER_URL}/estadisticas/?token={token}"
+    webbrowser.open(url)
+
 # Añadir esta función si no está definida
 def crear_ventana_principal():
     ventana = tk.Tk()
@@ -548,7 +561,7 @@ def crear_ventana_principal():
     boton_buscar = ttk.Button(main_frame, text="Buscar Coincidencias", command=mostrar_resultados_busqueda)
     boton_buscar.grid(row=3, column=0, pady=10)
 
-    boton_estadisticas = ttk.Button(main_frame, text="Ver Estadísticas")
+    boton_estadisticas = ttk.Button(main_frame, text="Ver Estadísticas", command=abrir_estadisticas)
     boton_estadisticas.grid(row=4, column=0, pady=10)
 
     return ventana
